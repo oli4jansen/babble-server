@@ -212,38 +212,6 @@ var match = function(req, res){
 
 };
 
-// Nieuwe gebruiker toevoegen
-// POST: {id, name, hometown, gender, pictureUrl, latitude, longitude}
-var insert = function(req, res){
-  console.log('API request > User API > insert');
-
-  res.setHeader('Content-Type', 'application/json');
-  try {
-    if(req.body.id && req.body.name && req.body.location && req.body.gender && req.body.picture && req.body.latitude && req.body.longitude) {
-      // Proberen de data te inserten in users
-      connection.query(
-      'INSERT INTO users (id, name, location, gender, picture, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [req.body.id, req.body.name, req.body.location, req.body.gender, req.body.picture, req.body.latitude, req.body.longitude],
-      function(err, rows, fields) {  
-        // Faal, stuur 500
-        if (err) {
-          res.send({status: '500'});
-        }else{
-          // Gelukt, stuur 200
-          res.send({status: '200'});
-        }
-      });
-    }else{
-      // Foutieve POST info: (HTTP) error 400
-      res.send({status: '400'});
-    }
-  } catch(err) {
-    // Probleem in het checken van shit: (HTTP) error 500
-    res.send({status: '500'});
-  }
-
-};
-
 // Gebruiker updaten
 // PUT: {description, likeMen, likeWomen}
 var update = function(req, res){
@@ -447,7 +415,6 @@ exports.check         = check;
 exports.matches       = matches;
 exports.match         = match;
 exports.get           = get;
-exports.insert        = insert;
 exports.update        = update;
 exports.deleteAccount = deleteAccount;
 exports.createLink    = createLink;
