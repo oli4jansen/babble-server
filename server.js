@@ -1,27 +1,36 @@
-// Shit importeren en instellen
-
 var http            = require('http');
 var express         = require('express');
 var webSocketServer = require('websocket').server;
 var nano            = require('nano')('http://127.0.0.1:5984');
 
+// De verschillende APIs bevinden zich in verschillende modules
 var userAPI         = require('./app/userapi');
 var feedAPI         = require('./app/feedapi');
 var chatAPI         = require('./app/chatapi');
 
+// Express app aanmaken
 var app             = express();
 
+// HTTP server opzetten
 var server          = http.createServer(app);
+
+// Websocket server opzetten
 var wsServer        = new webSocketServer({ httpServer: server });
 
 // JSON bodies toestaan
 app.use(express.json());
 
+// Tijdelijk: document server om de client te dienen
 app.use(express.static(__dirname + '/../client/angular/'));
 
-// Router: websocket requests
+/*
+ *	ROUTER
+ */
+
+// Websocket request
 wsServer.on('request', chatAPI.request);
 
+// HTTP requests zijn vanaf elk domein toegestaan
 app.all('*', function(req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
@@ -29,7 +38,7 @@ app.all('*', function(req, res, next) {
   next();
 });
 
-// Router: User API
+// User API request
 app.post('/user/authenticate', userAPI.authenticate);
 
 app.get('/user/:userId/check', userAPI.check);
@@ -43,8 +52,8 @@ app.get('/user/:userId/match/:matchId', userAPI.match);
 
 app.post('/user/:action', userAPI.createLink);
 
-// Router: Feed API
-app.get('/feed/:userId/:offset/:gender/:likeMen/:likeWomen/:latCoord/:longCoord/:searchRadius', feedAPI.feed);
+// Feed API request
+app.post('/feed/:userId/:offset/:gender/:likeMen/:likeWomen/:latCoord/:longCoord/:searchRadius', feedAPI.feed);
 
 // Express aan port 80 koppelen
 server.listen('80', function() {

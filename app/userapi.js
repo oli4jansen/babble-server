@@ -11,7 +11,6 @@ connection.query('USE tinderpro');
 
 var bingMapsKey = 'AsrEVvWtouDR82GoF9DjxzJuzBu9qOyytqtiApge__EnBY6YYZ22WuPvpgUPep56';
 
-
 var authenticate = function(req, res) {
   console.log('API request > User API > authenticate');
 
