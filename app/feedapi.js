@@ -1,3 +1,4 @@
+// Alle nodige modules includen en verbindingen instellen
 var FB         = require('fb');
 var mysql      = require('mysql');
 var connection = mysql.createConnection({
@@ -8,9 +9,12 @@ var connection = mysql.createConnection({
 });
 connection.query('USE tinderpro');
 
+// Functie de de feed ophaalt voor een bepaalde gebruiker
 var feed = function(req, res){
+  // Offset wordt ingesteld als de feed wordt opgehaald terwijl er nog cards aanwezig zijn in de client
   var offset        = req.param("offset");
 
+  // Andere variabelen die uit de URL gehaald kunnen worden
   var userId        = req.param("userId");
   var gender        = req.param("gender");
   var likeMen       = req.param("likeMen");
@@ -19,28 +23,32 @@ var feed = function(req, res){
   var longCoord     = req.param("longCoord");
   var searchRadius  = req.param("searchRadius");
 
+  // Loggen dat deze functie uitgevoerd wordt
   console.log('API request > Feed API > feed (offset:'+offset+')');
 
   try {
+    // Access token uit de POST data ophalen
     var accessToken   = req.body.accessToken;
 
+    // Header instellen zodat we JSON kunnen outputten
     res.setHeader('Content-Type', 'application/json');
 
     var sqlAddition = '';
+    // Op basis van seksuele voorkeur de SQL aanpassen
     if(likeMen === '1' && likeWomen === '0') {
       sqlAddition = ' AND users.gender = "male"';
     }else if(likeMen === '0' && likeWomen === '1') {
       sqlAddition = ' AND users.gender = "female"';
     }
 
+    // Op basis van geslacht de SQL aanpassen
     if(gender === 'male') {
       sqlAddition = sqlAddition + ' AND users.likeMen = 1';
     }else{
       sqlAddition = sqlAddition + ' AND users.likeWomen = 1';
     }
 
-  //  console.log(sqlAddition);
-
+    // De almachtige SQL query
     var sql = 'SELECT id, name,'+
       ' 111.045* DEGREES(ACOS(COS(RADIANS(latpoint)) * COS(RADIANS(latitude))'+
       ' * COS(RADIANS(longpoint) - RADIANS(longitude))'+
@@ -48,7 +56,7 @@ var feed = function(req, res){
       ' * SIN(RADIANS(latitude)))) AS distance,'+
       ' latitude,'+
       ' longitude,'+
-      ' DATE_FORMAT( FROM_DAYS( DATEDIFF( NOW( ) , birthday ) ) ,  "%Y" ) +0 AS age,'+
+      ' DATE_FORMAT( FROM_DAYS( DATEDIFF( NOW( ) , birthdate ) ) ,  "%Y" ) +0 AS age,'+
       ' description'+
     ' FROM users'+
     ' JOIN ('+
@@ -70,12 +78,11 @@ var feed = function(req, res){
     ' ORDER BY distance'+
     ' LIMIT 10 OFFSET '+offset;
 
-  //  console.log(sql);
-
+    // Die shit uitvoeren, vraagtekens vervangen door de params
     connection.query(sql, [latCoord, longCoord, userId, userId, userId, searchRadius, searchRadius, searchRadius, searchRadius, userId],function(err, rows, fields) {
       if (err) throw err;
+      // Als er personen gevonden zijn
       if(rows) {
-        // Er zijn personen gevonden
 
         // Stel de Facebook AccessToken in
         FB.setAccessToken(accessToken);
@@ -109,10 +116,12 @@ var feed = function(req, res){
           res.send({ status: '200', data: rows});
         });
       }else{
+        // Geen gebruikers gevonden, gooi een error
         throw "No rows";
       }
     });
   } catch(err) {
+    // Als er een error is, loggen en status 500 outputten
     console.log(err);
     res.send({status: '500', data: []});
   }
