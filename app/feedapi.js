@@ -7,7 +7,7 @@ var connection = mysql.createConnection({
   user     : 'root',
   password : 'root'
 });
-connection.query('USE tinderpro');
+connection.query('USE babble');
 
 // Functie de de feed ophaalt voor een bepaalde gebruiker
 var feed = function(req, res){

@@ -7,7 +7,7 @@ var connection = mysql.createConnection({
   user     : 'root',
   password : 'root'
 });
-connection.query('USE tinderpro');
+connection.query('USE babble');
 
 var bingMapsKey = 'AsrEVvWtouDR82GoF9DjxzJuzBu9qOyytqtiApge__EnBY6YYZ22WuPvpgUPep56';
 

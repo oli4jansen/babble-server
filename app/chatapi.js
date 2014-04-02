@@ -5,7 +5,7 @@ var mysqlConnection   = mysql.createConnection({
   user     : 'root',
   password : 'root'
 });
-mysqlConnection.query('USE tinderpro');
+mysqlConnection.query('USE babble');
 
 var nano              = require('nano')('http://127.0.0.1:5984');
 var chats             = nano.db.use('chats');

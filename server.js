@@ -38,6 +38,10 @@ app.all('*', function(req, res, next) {
   next();
 });
 
+app.get('/', function(req, res){
+	res.send('API server voor Babble. Doei.');
+});
+
 // User API request
 app.post('/user/authenticate', userAPI.authenticate);
 
