@@ -97,7 +97,7 @@ var authenticate = function(req, res) {
               console.log('Niet alle data ingevoerd, vraag om de rest.');
 
               var location = '';
-              if(FBres.location.name !== undefined) location = FBres.location.name;
+              if(FBres.location !== undefined && FBres.location.name !== undefined) location = FBres.location.name;
 
               res.send({
                 status: 206,
