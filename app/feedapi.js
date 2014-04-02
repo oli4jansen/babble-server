@@ -56,7 +56,7 @@ var feed = function(req, res){
       ' * SIN(RADIANS(latitude)))) AS distance,'+
       ' latitude,'+
       ' longitude,'+
-      ' DATE_FORMAT( FROM_DAYS( DATEDIFF( NOW( ) , birthdate ) ) ,  "%Y" ) +0 AS age,'+
+      ' DATE_FORMAT( FROM_DAYS( DATEDIFF( NOW( ) , birthday ) ) ,  "%Y" ) +0 AS age,'+
       ' description'+
     ' FROM users'+
     ' JOIN ('+

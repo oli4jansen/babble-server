@@ -1,5 +1,5 @@
-var mysql      = require('mysql');
-var mysqlConnection = mysql.createConnection({
+var mysql             = require('mysql');
+var mysqlConnection   = mysql.createConnection({
   host     : '127.0.0.1',
   port     : '8889',
   user     : 'root',
@@ -7,8 +7,8 @@ var mysqlConnection = mysql.createConnection({
 });
 mysqlConnection.query('USE tinderpro');
 
-var nano = require('nano')('http://127.0.0.1:5984');
-var chats           = nano.db.use('chats');
+var nano              = require('nano')('http://127.0.0.1:5984');
+var chats             = nano.db.use('chats');
 
 // Alle functies
 

@@ -1,0 +1,22 @@
+{
+  "name": "Babble API",
+  "version": "0.0.1",
+  "description": "The Babble API server written in Javascript with NodeJS",
+  "main": "server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oli4jansen/babble-server.git"
+  },
+  "author": "Olivier Jansen",
+  "bugs": {
+    "url": "https://github.com/oli4jansen/babble-server/issues"
+  },
+  "homepage": "https://github.com/oli4jansen/babble-server",
+  "dependencies" : {
+    "express"   :  "3.5.x",
+    "websocket" :  "1.0.x",
+    "fb"        :  "0.6.x",
+    "mysql"     :  "2.1.x",
+    "nano"      :  "5.7.x"
+  },
+}
