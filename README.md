@@ -4,8 +4,10 @@ Dit is de backend voor Babble. Volledig geschreven in Javascript, draait op Node
 
 ## Server starten ##
 
-1. Installeer alle dependencies met `npm`
-2. `sudo node server.js`
+1. Installeer CouchDB, MySQL en NodeJS. Hoe dit te installeren is, verschilt per OS.
+2. Clone deze repository.
+3. Installeer alle dependencies uit package.json met `npm install`
+4. `sudo node server.js`
 
 ## Overzicht API endpoints ##
 
