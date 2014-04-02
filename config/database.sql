@@ -1,4 +1,4 @@
-CREATE DB babble
+CREATE DB babble;
 USE babble;
 
 CREATE TABLE `users` (
@@ -19,3 +19,16 @@ CREATE TABLE `users` (
   UNIQUE KEY `id` (`id`),
   KEY `latitude` (`latitude`,`longitude`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+CREATE TABLE `userLinksFinished` (
+  `userId1` bigint(32) NOT NULL,
+  `userId2` bigint(32) NOT NULL,
+  `action` smallint(1) NOT NULL,
+  KEY `userId1` (`userId1`),
+  KEY `userId2` (`userId2`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `userLinksPending` (
+  `userIdLiked` bigint(32) NOT NULL,
+  `userIdPending` bigint(32) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
