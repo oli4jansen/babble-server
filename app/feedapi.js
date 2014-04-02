@@ -116,8 +116,8 @@ var feed = function(req, res){
           res.send({ status: '200', data: rows});
         });
       }else{
-        // Geen gebruikers gevonden, gooi een error
-        throw "No rows";
+        // Geen gebruikers gevonden, stuur 404
+        res.send({status: '404', data: []});
       }
     });
   } catch(err) {
