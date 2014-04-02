@@ -1,5 +1,5 @@
 {
-  "name": "Babble API",
+  "name": "babble-server",
   "version": "0.0.1",
   "description": "The Babble API server written in Javascript with NodeJS",
   "main": "server.js",
@@ -18,5 +18,5 @@
     "fb"        :  "0.6.x",
     "mysql"     :  "2.1.x",
     "nano"      :  "5.7.x"
-  },
+  }
 }
