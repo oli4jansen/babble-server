@@ -192,7 +192,7 @@ var request = function(request) {
                 console.log(possibleConnections);
 
                 possibleConnections.forEach(function(con) {
-                  if(con.smallest === change.doc.smallest && con.largest === change.doc.largest) {
+                  if(openConnections[con].smallest === change.doc.smallest && openConnections[con].largest === change.doc.largest) {
                     availableConnections.push(con);
                   }
                 });
@@ -214,7 +214,7 @@ var request = function(request) {
                   console.log(json);
                   // En pushen we dat naar de huidige verbinding
                   availableConnections.foreach(function(con) {
-                    con.connection.sendUTF(json);
+                    openConnections[con].connection.sendUTF(json);
                   });
 
 //                  if(messageCounter < 27 && status === 'hidden') {
