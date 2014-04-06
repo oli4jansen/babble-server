@@ -152,7 +152,9 @@ var request = function(request) {
   connection.on('close', function(connection) {
     console.log((new Date()) + ' ' + myName + ' is weg.');
 
+    console.log(openConnections);
     openConnections.splice(myName, 1);
+    console.log(openConnections);
 
     // Als er aan het begin van de connectie minder dan 26 berichten verstuurd waren, dan moeten we de database even updaten zodat de counter de volgende keer up-to-date is
     if(messageCounterInit < 27) {
