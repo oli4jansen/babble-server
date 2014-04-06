@@ -213,7 +213,7 @@ var request = function(request) {
                   console.log('Change in DB:');
                   console.log(json);
                   // En pushen we dat naar de huidige verbinding
-                  availableConnections.foreach(function(con) {
+                  availableConnections.forEach(function(con) {
                     openConnections[con].connection.sendUTF(json);
                   });
 
