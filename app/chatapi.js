@@ -10,6 +10,8 @@ mysqlConnection.query('USE babble');
 var nano              = require('nano')('http://127.0.0.1:5984');
 var chats             = nano.db.use('chats');
 
+var openConnections = [];
+
 // Alle functies
 
 var request = function(request) {
@@ -41,6 +43,8 @@ var request = function(request) {
         myName = data.myName; // naam van degene die verbinding maakt
         herName = data.herName; // naam van de chatpartner
 
+        openConnections[myName] = { connection: connection, smallest: Math.min(myName, herName), largest: Math.max(myName, herName) };
+
         mysqlConnection.query('SELECT action FROM userLinksFinished WHERE (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [myName, herName, herName, myName], function(err, rows, fields) {
           if (err) {
             console.log(err);
@@ -50,6 +54,7 @@ var request = function(request) {
                 // De counters opzetten, het te halen aantal berichten is nog niet gehaald.
                 messageCounterInit = rows[0].action;
                 messageCounter = rows[0].action;
+
 
                 // De status van dit gesprek is fase 1
                 var status = 'hidden';
@@ -86,45 +91,6 @@ var request = function(request) {
                   console.log(err);
                 }
               });
-
-              // Nieuwe feed aanmaken die wijzigingen in de gaten houdt
-              var feed = chats.follow();
-
-              // Feed instellen
-              feed.db            = "http://127.0.0.1:5984/chats";
-              feed.since         = "now";
-              feed.filter        = "_view";
-              feed.view          = 'chats/by_time';
-              feed.include_docs  = true;
-
-              // Als er een wijziging is in de DB
-              feed.on('change', function(change) {
-                // en als de conversation name van dat document gelijk is aan de huidige naam
-                if(change.doc.smallest === Math.min(myName, herName) && change.doc.largest === Math.max(myName, herName)) {
-                  // Dan parsen we dat
-                  var obj = {
-                    id: change.doc._id,
-                    rev: change.doc._rev,
-                    time: (new Date()).getTime(),
-                    text: change.doc.body,
-                    author: change.doc.author
-                  };
-                  var json = JSON.stringify({ type:'message', data: obj });
-
-                  console.log('Change in DB:');
-                  console.log(json);
-                  // En pushen we dat naar de huidige verbinding
-                  connection.sendUTF(json);
-
-                  if(messageCounter < 27 && status === 'hidden') {
-                    messageCounter++;
-                    console.log('Send updated message counter: '+messageCounter);
-                    connection.sendUTF(JSON.stringify({ type: 'update', counter: messageCounter }));
-                  }
-
-                }
-              })
-              feed.follow();
             }else{
               console.log('WARNING: Chat declined, possible hacker?');
               connection.sendUTF(JSON.stringify({ type: 'status', data: 'declined' }));
@@ -182,7 +148,9 @@ var request = function(request) {
  
   // Gebruiker sluit verbinding
   connection.on('close', function(connection) {
-    console.log((new Date()) + ' ' + request.origin + ' is weg.');
+    console.log((new Date()) + ' ' + myName + ' is weg.');
+
+    openConnections.splice(myName, 1);
 
     // Als er aan het begin van de connectie minder dan 26 berichten verstuurd waren, dan moeten we de database even updaten zodat de counter de volgende keer up-to-date is
     if(messageCounterInit < 27) {
@@ -197,5 +165,60 @@ var request = function(request) {
     }
   });
 };
+
+              // Nieuwe feed aanmaken die wijzigingen in de gaten houdt
+              var feed = chats.follow();
+
+              // Feed instellen
+              feed.db            = "http://127.0.0.1:5984/chats";
+              feed.since         = "now";
+              feed.filter        = "_view";
+              feed.view          = 'chats/by_time';
+              feed.include_docs  = true;
+
+              // Als er een wijziging is in de DB
+              feed.on('change', function(change) {
+
+                console.log('Change gedetecteerd');
+
+                var possibleConnections  = new Array;
+                var availableConnections = new Array;
+
+                if(openConnections[change.doc.smallest] !== undefined) possibleConnections[] = change.doc.smallest;
+                if(openConnections[change.doc.largest]  !== undefined) possibleConnections[] = change.doc.largest;
+
+                possibleConnections.forEach(function(con) {
+                  if(con.smallest === change.doc.smallest && con.largest === change.doc.largest) {
+                    availableConnections[] = con;
+                  }
+                });
+
+                if(availableConnections.length > 0) {
+                  // Dan parsen we dat
+                  var obj = {
+                    id: change.doc._id,
+                    rev: change.doc._rev,
+                    time: (new Date()).getTime(),
+                    text: change.doc.body,
+                    author: change.doc.author
+                  };
+                  var json = JSON.stringify({ type:'message', data: obj });
+
+                  console.log('Change in DB:');
+                  console.log(json);
+                  // En pushen we dat naar de huidige verbinding
+                  availableConnections.foreach(function(con) {
+                    con.connection.sendUTF(json);
+                  });
+
+//                  if(messageCounter < 27 && status === 'hidden') {
+//                    messageCounter++;
+//                    console.log('Send updated message counter: '+messageCounter);
+//                    connection.sendUTF(JSON.stringify({ type: 'update', counter: messageCounter }));
+//                  }
+
+                }
+              })
+              feed.follow();
 
 exports.request = request;
