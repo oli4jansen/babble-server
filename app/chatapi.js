@@ -45,6 +45,8 @@ var request = function(request) {
 
         openConnections[myName] = { connection: connection, smallest: Math.min(myName, herName), largest: Math.max(myName, herName) };
 
+        console.log(openConnections);
+
         mysqlConnection.query('SELECT action FROM userLinksFinished WHERE (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [myName, herName, herName, myName], function(err, rows, fields) {
           if (err) {
             console.log(err);
@@ -187,11 +189,15 @@ var request = function(request) {
                 if(openConnections[change.doc.smallest] !== undefined) possibleConnections.push(change.doc.smallest);
                 if(openConnections[change.doc.largest]  !== undefined) possibleConnections.push(change.doc.largest);
 
+                console.log(possibleConnections);
+
                 possibleConnections.forEach(function(con) {
                   if(con.smallest === change.doc.smallest && con.largest === change.doc.largest) {
                     availableConnections.push(con);
                   }
                 });
+
+                console.log(availableConnections);
 
                 if(availableConnections.length > 0) {
                   // Dan parsen we dat
