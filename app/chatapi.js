@@ -118,7 +118,7 @@ var request = function(request) {
 
                   if(messageCounter < 27 && status === 'hidden') {
                     messageCounter++;
-                    console.log('Send updated message counter: '+MessageCounter);
+                    console.log('Send updated message counter: '+messageCounter);
                     connection.sendUTF(JSON.stringify({ type: 'update', counter: messageCounter }));
                   }
 
