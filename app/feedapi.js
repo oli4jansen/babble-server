@@ -82,8 +82,7 @@ var feed = function(req, res){
     connection.query(sql, [latCoord, longCoord, userId, userId, userId, searchRadius, searchRadius, searchRadius, searchRadius, userId],function(err, rows, fields) {
       if (err) throw err;
       // Als er personen gevonden zijn
-      if(rows) {
-
+      if(rows !== undefined && rows.length > 0) {
         // Stel de Facebook AccessToken in
         FB.setAccessToken(accessToken);
 
