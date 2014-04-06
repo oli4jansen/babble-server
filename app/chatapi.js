@@ -184,12 +184,12 @@ var request = function(request) {
                 var possibleConnections  = new Array;
                 var availableConnections = new Array;
 
-                if(openConnections[change.doc.smallest] !== undefined) possibleConnections[] = change.doc.smallest;
-                if(openConnections[change.doc.largest]  !== undefined) possibleConnections[] = change.doc.largest;
+                if(openConnections[change.doc.smallest] !== undefined) possibleConnections.push(change.doc.smallest);
+                if(openConnections[change.doc.largest]  !== undefined) possibleConnections.push(change.doc.largest);
 
                 possibleConnections.forEach(function(con) {
                   if(con.smallest === change.doc.smallest && con.largest === change.doc.largest) {
-                    availableConnections[] = con;
+                    availableConnections.push(con);
                   }
                 });
 
