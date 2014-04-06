@@ -46,7 +46,7 @@ var request = function(request) {
             console.log(err);
           }else{
             if(rows[0].action > 0) {
-              if(rows[0].action < 25) {
+              if(rows[0].action < 27) {
                 // De counters opzetten, het te halen aantal berichten is nog niet gehaald.
                 messageCounterInit = rows[0].action;
                 messageCounter = rows[0].action;
@@ -111,12 +111,14 @@ var request = function(request) {
                   };
                   var json = JSON.stringify({ type:'message', data: obj });
 
+                  console.log('Change in DB:');
+                  console.log(json);
                   // En pushen we dat naar de huidige verbinding
                   connection.sendUTF(json);
 
-                  messageCounter++;
-                  console.log('MessageCounter: '+messageCounter);
                   if(messageCounter < 27 && status === 'hidden') {
+                    messageCounter++;
+                    console.log('Send updated message counter: '+MessageCounter);
                     connection.sendUTF(JSON.stringify({ type: 'update', counter: messageCounter }));
                   }
 
