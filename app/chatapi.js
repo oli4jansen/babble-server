@@ -10,7 +10,7 @@ mysqlConnection.query('USE babble');
 var nano              = require('nano')('http://127.0.0.1:5984');
 var chats             = nano.db.use('chats');
 
-var openConnections = new Array;
+var openConnections = new Array();
 
 // Alle functies
 
@@ -43,11 +43,6 @@ var request = function(request) {
         myName = data.myName; // naam van degene die verbinding maakt
         herName = data.herName; // naam van de chatpartner
 
-        openConnections[myName] = { connection: connection, smallest: Math.min(myName, herName), largest: Math.max(myName, herName) };
-
-        console.log(openConnections);
-        console.log(JSON.stringify(openConnections));
-
         mysqlConnection.query('SELECT action FROM userLinksFinished WHERE (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [myName, herName, herName, myName], function(err, rows, fields) {
           if (err) {
             console.log(err);
@@ -68,6 +63,12 @@ var request = function(request) {
               connection.sendUTF(JSON.stringify({ type: 'status', data: status, counter: messageCounter }));
 
               console.log((new Date()) + ' ' + myName + ' opent chat met ' + herName + '.');
+
+              openConnections[ myName ] = { connection: connection, smallest: Math.min(myName, herName), largest: Math.max(myName, herName) };
+
+              console.log(openConnections);
+              console.log(openConnections.length);
+              console.log(JSON.stringify(openConnections));
 
               // Document naam is het laagste ID + het hoogste ID van de twee chatters;
               // Bij 114056 die chat met 114904 zou de chatnaam zijn: '114056+114904'
