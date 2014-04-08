@@ -118,7 +118,7 @@ var authenticate = function(req, res) {
           }
         }
       } catch(err) {
-        if(isset(request)) {
+        if(request!== undefined) {
           request.end();
           console.log('End request');
         }
