@@ -16,7 +16,7 @@ var authenticate = function(req, res) {
 
   res.setHeader('Content-Type', 'application/json');
 
-  try {    
+  try {
     // Access token die we ontvangen hebben van client instellen
     FB.setAccessToken(req.body.accessToken);
 
@@ -41,7 +41,7 @@ var authenticate = function(req, res) {
             // Als de access token uit de DB niet gelijk is aan de opgegeven access token:
             if(rows[0].accessToken !== req.body.accessToken) {
               // Access token updaten
-              connection.query('UPDATE users SET accessToken = ? WHERE id = ?', [req.body.accessToken, FBres.id], function(err, rows, fields) {  
+              connection.query('UPDATE users SET accessToken = ? WHERE id = ?', [req.body.accessToken, FBres.id], function(err, rows, fields) {
                 // Faal, gooi error
                 if (err) throw err;
               });
@@ -52,49 +52,54 @@ var authenticate = function(req, res) {
               // Foto URL opstellen
               var picture = 'http://graph.facebook.com/'+FBres.id+'/picture?width=600&height=600';
 
-              // Coordinaten ophalen op basis van locatie
-              var latitude = '';
-              var longitude = '';
+              if(req.body.location !== '') {
+                // Coordinaten ophalen op basis van locatie
+                var latitude = '';
+                var longitude = '';
 
-              var request = http.request('http://dev.virtualearth.net/REST/v1/Locations?q='+ encodeURIComponent(req.body.location) + '&o=json&key='+bingMapsKey, function(response){
-                var body = ""
-                response.on('data', function(data) {
-                  body += data;
+                var request = http.request('http://dev.virtualearth.net/REST/v1/Locations?q='+ encodeURIComponent(req.body.location) + '&o=json&key='+bingMapsKey, function(response){
+                  var body = ""
+                  response.on('data', function(data) {
+                    body += data;
+                  });
+                  response.on('end', function() {
+                    var result = JSON.parse(body);
+                    if(result.resourceSets[0].resources !== undefined && result.resourceSets[0].resources.length > 0) {
+                      latitude  = result.resourceSets[0].resources[0].point.coordinates[0];
+                      longitude = result.resourceSets[0].resources[0].point.coordinates[1];
+
+                      // Gegeven in users table invoeren
+                      connection.query(
+                      'INSERT INTO users (id, accessToken, name, birthday, location, gender, picture, description, likeMen, likeWomen, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                      [FBres.id, req.body.accessToken, FBres.first_name, req.body.birthday, req.body.location, FBres.gender, picture, req.body.description, req.body.likeMen, req.body.likeWomen, latitude, longitude],
+                      function(err, rows, fields) {
+                        // Faal, stuur 500
+                        if (err) {
+                          console.log(err);
+                          throw 'We\'re sorry but an error occurred on our server.';
+                        }else{
+                          console.log('Gebruiker '+FBres.id+' aangemaakt.');
+
+                          // Gelukt, stuur 200
+                          res.send({status: 200, data: {id:FBres.id}});
+                        }
+                      });
+                    } else {
+                      // TODO: popup scherm met plaats
+                      throw 'The location you provided wasn\'t an valid one.';
+                    }
+                  });
                 });
-                response.on('end', function() {
-                  var result = JSON.parse(body);
-                  if(result.resourceSets[0].resources.length > 0) {
-                    latitude  = result.resourceSets[0].resources[0].point.coordinates[0];
-                    longitude = result.resourceSets[0].resources[0].point.coordinates[1];
-
-                    // Gegeven in users table invoeren
-                    connection.query(
-                    'INSERT INTO users (id, accessToken, name, birthday, location, gender, picture, description, likeMen, likeWomen, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [FBres.id, req.body.accessToken, FBres.first_name, req.body.birthday, req.body.location, FBres.gender, picture, req.body.description, req.body.likeMen, req.body.likeWomen, latitude, longitude],
-                    function(err, rows, fields) {  
-                      // Faal, stuur 500
-                      if (err) {
-                        throw err;
-                      }else{
-                        console.log('Gebruiker '+FBres.id+' aangemaakt.');
-
-                        // Gelukt, stuur 200
-                        res.send({status: 200, data: {id:FBres.id}});
-                      }
-                    });
-                  } else {
-                    // TODO: popup scherm met plaats
-                    throw 'Couldn\'t find coords.';
-                  }
+                request.on('error', function(e) {
+                  throw e.message;
                 });
-              });
-              request.on('error', function(e) {
-                throw e.message;
-              });
-              request.end();
+                request.end();
+              } else {
+                throw 'Please provide us with a valid location. We can\'t find people near you if we don\'t know where you are.';
+              }
 
             } else {
-              console.log('Niet alle data ingevoerd, vraag om de rest.');
+              console.log('The data you provided wasn\'t complete. Please fill in all fields.');
 
               var location = '';
               if(FBres.location !== undefined && FBres.location.name !== undefined) location = FBres.location.name;
@@ -117,7 +122,7 @@ var authenticate = function(req, res) {
     });
   }catch(err){
     console.log(err);
-    res.send({status: 500});
+    res.send({ status: 500, data: err });
   }
 };
 
@@ -227,7 +232,7 @@ var update = function(req, res){
       connection.query(
       'UPDATE users SET description = ?, likeMen = ?, likeWomen = ?, searchRadius = ? WHERE id = ?',
       [req.body.description, parseInt(req.body.likeMen), parseInt(req.body.likeWomen), parseInt(req.body.searchRadius), userId],
-      function(err, rows, fields) {  
+      function(err, rows, fields) {
         // Faal, gooi error
         if (err) throw err;
 
@@ -258,25 +263,25 @@ var deleteAccount = function(req, res){
       if (err) throw err;
 
       connection.query('DELETE FROM users WHERE id = ?', [userId], function(err, result) {
-        if (err) { 
+        if (err) {
           connection.rollback(function() {
             throw err;
           });
         }
         connection.query('DELETE FROM userLinksPending WHERE userIdLiked = ? OR userIdPending = ?', [userId, userId], function(err, result) {
-          if (err) { 
+          if (err) {
             connection.rollback(function() {
               throw err;
             });
           }
           connection.query('DELETE FROM userLinksFinished WHERE userId1 = ? OR userId2 = ?', [userId, userId], function(err, result) {
-            if (err) { 
+            if (err) {
               connection.rollback(function() {
                 throw err;
               });
-            }  
+            }
             connection.commit(function(err) {
-              if (err) { 
+              if (err) {
                 connection.rollback(function() {
                   throw err;
                 });
@@ -319,7 +324,7 @@ var createLink = function(req, res){
       // Checken of er al een userLinksPending row bestaat waarin ik pending sta.
       connection.query('SELECT COUNT(userIdLiked) AS c FROM userLinksPending WHERE userIdLiked = ? AND userIdPending = ?',
       [req.body.userIdHer, req.body.userIdMe],
-      function(err, rows, fields) {  
+      function(err, rows, fields) {
         // Faal, gooi error
         if (err) throw err;
 
@@ -330,7 +335,7 @@ var createLink = function(req, res){
               if (err) throw err;
 
               connection.query('INSERT INTO userLinksFinished (userId1, userId2, action) VALUES (?, ?, ?)', [req.body.userIdMe, req.body.userIdHer, actionInt], function(err, result) {
-                if (err) { 
+                if (err) {
                   // Error tijdens inserten van userLinkFinished
                   connection.rollback(function() {
                     // Insert terugdraaien en een error gooien
@@ -340,16 +345,16 @@ var createLink = function(req, res){
 
                 // Insert into userLinksFinished succesvol, nu uit userLinksPending verwijderen
                 connection.query('DELETE FROM userLinksPending WHERE userIdLiked = ? AND userIdPending = ?', [req.body.userIdHer, req.body.userIdMe], function(err, result) {
-                  if (err) { 
+                  if (err) {
                     // Error tijdens verwijderen
                     connection.rollback(function() {
                       // Insert en delete terugdraaien en een error gooien
                       throw err;
                     });
-                  }  
+                  }
                   // Geen error: commit die shit
                   connection.commit(function(err) {
-                    if (err) { 
+                    if (err) {
                       // Error tijdens commit
                       connection.rollback(function() {
                         // Toch maar terugdraaien en een error gooien
@@ -359,7 +364,7 @@ var createLink = function(req, res){
                     // Die shit is gelukt yeah
                     res.send({status: '200', data: 'match'});
 
-                    
+
 
                     // TODO: Push notification versturen naar 'her'
 
@@ -377,7 +382,7 @@ var createLink = function(req, res){
               var sql = 'INSERT INTO userLinksPending (userIdLiked, userIdPending) VALUES (?, ?)';
               connection.query(sql,
               [req.body.userIdMe, req.body.userIdHer],
-              function(err, rows, fields) {  
+              function(err, rows, fields) {
                 // Faal, stuur 500
                 if (err) throw err;
                 // Gelukt, stuur 200
@@ -389,7 +394,7 @@ var createLink = function(req, res){
               var sql = 'INSERT INTO userLinksFinished (userId1, userId2, action) VALUES (?, ?, 0)';
               connection.query(sql,
               [req.body.userIdMe, req.body.userIdHer],
-              function(err, rows, fields) {  
+              function(err, rows, fields) {
                 // Faal, stuur 500
                 if (err) throw err;
                 // Gelukt, stuur 200
