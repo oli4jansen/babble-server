@@ -10,15 +10,22 @@ mysqlConnection.query('USE babble');
 var nano              = require('nano')('http://127.0.0.1:5984');
 var chats             = nano.db.use('chats');
 
-var openConnections = {};
+var feed = chats.follow();
 
-// Alle functies
+// Feed instellen
+feed.db            = "http://127.0.0.1:5984/chats";
+feed.since         = "now";
+feed.filter        = "_view";
+feed.view          = 'chats/by_time';
+feed.include_docs  = true;
+
+var openConnections = {};
 
 var request = function(request) {
   console.log('API request > Chats API > request');
 
   // Verbinding met client accepteren
-  var connection = request.accept(null, request.origin); 
+  var connection = request.accept(null, request.origin);
 
   // Shit die ingesteld moet worden voordat gechat kan worden
   var myName = false;
@@ -147,7 +154,7 @@ var request = function(request) {
       }
     }
   });
- 
+
   // Gebruiker sluit verbinding
   connection.on('close', function(connection) {
     console.log(myName + ': OFFLINE: chat met ' + herName);
@@ -168,18 +175,11 @@ var request = function(request) {
   });
 };
 
-var feed = chats.follow();
-
-// Feed instellen
-feed.db            = "http://127.0.0.1:5984/chats";
-feed.since         = "now";
-feed.filter        = "_view";
-feed.view          = 'chats/by_time';
-feed.include_docs  = true;
-
 // Als er een wijziging is in de DB
 feed.on('change', function(change) {
   console.log('DATABASE: Change detected');
+
+  console.log(change);
 
   var possibleConnections  = new Array;
   var availableConnections = new Array;
@@ -187,46 +187,35 @@ feed.on('change', function(change) {
   if(openConnections[change.doc.smallest] !== undefined) possibleConnections.push(change.doc.smallest);
   if(openConnections[change.doc.largest]  !== undefined) possibleConnections.push(change.doc.largest);
 
-  console.log('DATABASE: change smallest ('+change.doc.smallest+') en largest ('+change.doc.largest+')');
+  possibleConnections.forEach(function(con) {
+    if(openConnections[con].smallest === change.doc.smallest && openConnections[con].largest === change.doc.largest) {
+      availableConnections.push(con);
+    }
+  });
 
-  console.log('Possible Connections:');
+  console.log('Online personen:');
+  console.log(availableConnections);
 
-  console.log(possibleConnections);
+  if(availableConnections.length > 0) {
+    // Dan parsen we dat
+    var obj = {
+      id: change.doc._id,
+      rev: change.doc._rev,
+      time: (new Date()).getTime(),
+      text: change.doc.body,
+      author: change.doc.author
+    };
+    var json = JSON.stringify({ type:'message', data: obj });
 
-                possibleConnections.forEach(function(con) {
-                  if(openConnections[con].smallest === change.doc.smallest && openConnections[con].largest === change.doc.largest) {
-                    availableConnections.push(con);
-                  }
-                });
+    console.log('Change in DB:');
+    console.log(json);
+    // En pushen we dat naar de huidige verbinding
+    availableConnections.forEach(function(con) {
+      openConnections[con].connection.sendUTF(json);
+    });
 
-                console.log(availableConnections);
-
-                if(availableConnections.length > 0) {
-                  // Dan parsen we dat
-                  var obj = {
-                    id: change.doc._id,
-                    rev: change.doc._rev,
-                    time: (new Date()).getTime(),
-                    text: change.doc.body,
-                    author: change.doc.author
-                  };
-                  var json = JSON.stringify({ type:'message', data: obj });
-
-                  console.log('Change in DB:');
-                  console.log(json);
-                  // En pushen we dat naar de huidige verbinding
-                  availableConnections.forEach(function(con) {
-                    openConnections[con].connection.sendUTF(json);
-                  });
-
-//                  if(messageCounter < 27 && status === 'hidden') {
-//                    messageCounter++;
-//                    console.log('Send updated message counter: '+messageCounter);
-//                    connection.sendUTF(JSON.stringify({ type: 'update', counter: messageCounter }));
-//                  }
-
-                }
-              })
-              feed.follow();
+  }
+})
+feed.follow();
 
 exports.request = request;
