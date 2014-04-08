@@ -81,7 +81,7 @@ var request = function(request) {
 
               chats.view('chats', 'by_time?startkey=%5B'+Math.min(myName, herName)+','+Math.max(myName, herName)+',0%5D&endkey=%5B'+Math.min(myName, herName)+','+Math.max(myName, herName)+',9999999999999999999%5D', function(err, body) {
                 if (!err) {
-                  if(body.rows.length > 0 && body.rows.value.author !== myName) {
+                  if(body.rows.length > 0 && body.rows[body.rows.length-1].value.author !== myName) {
                     var messages = [];
                     body.rows.forEach(function(doc) {
                       var obj = {
