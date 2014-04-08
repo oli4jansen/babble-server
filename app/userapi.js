@@ -76,6 +76,7 @@ var authenticate = function(req, res) {
                         // Faal, stuur 500
                         if (err) {
                           console.log(err);
+                          request.end();
                           throw 'We\'re sorry but an error occurred on our server.';
                         }else{
                           console.log('Gebruiker '+FBres.id+' aangemaakt.');
@@ -85,7 +86,7 @@ var authenticate = function(req, res) {
                         }
                       });
                     } else {
-                      // TODO: popup scherm met plaats
+                      request.end();
                       throw 'The location you provided wasn\'t an valid one.';
                     }
                   });
