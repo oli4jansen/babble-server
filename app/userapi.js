@@ -16,20 +16,20 @@ var authenticate = function(req, res) {
 
   res.setHeader('Content-Type', 'application/json');
 
-  try {
-    // Access token die we ontvangen hebben van client instellen
-    FB.setAccessToken(req.body.accessToken);
+  // Access token die we ontvangen hebben van client instellen
+  FB.setAccessToken(req.body.accessToken);
 
-    // Een facebook graph api request maken
-    FB.api('/me', { fields: ['id', 'first_name', 'location', 'gender', 'picture.type(large)'] }, function(FBres){
-      if(!FBres || FBres.error) {
-        console.log(!FBres ? 'error occurred' : FBres.error);
-        res.send({status: 500});
-        return;
-      }
+  // Een facebook graph api request maken
+  FB.api('/me', { fields: ['id', 'first_name', 'location', 'gender', 'picture.type(large)'] }, function(FBres){
+    if(!FBres || FBres.error) {
+      console.log(!FBres ? 'error occurred' : FBres.error);
+      res.send({status: 500});
+      return;
+    }
 
-      // Checken of een gebruiker met dit ID al bestaat, zo ja, haal access token op
-      connection.query('SELECT accessToken FROM users WHERE id = ?', [FBres.id], function(err, rows, fields) {
+    // Checken of een gebruiker met dit ID al bestaat, zo ja, haal access token op
+    connection.query('SELECT accessToken FROM users WHERE id = ?', [FBres.id], function(err, rows, fields) {
+      try {
         if (err) {
           throw err;
         }else{
@@ -117,12 +117,16 @@ var authenticate = function(req, res) {
             }
           }
         }
-      });
+      } catch(err) {
+        if(isset(request)) {
+          request.end();
+          console.log('End request');
+        }
+        console.log('Catched error');
+        res.send({ status: 500, data: err });
+      }
     });
-  }catch(err){
-    if(isset(request)) request.end();
-    res.send({ status: 500, data: err });
-  }
+  });
 };
 
 // Checken of een gebruiker wel bestaat
