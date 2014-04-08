@@ -62,7 +62,7 @@ var request = function(request) {
               // Aan client bevestigen dat er verbinding gemaakt is
               connection.sendUTF(JSON.stringify({ type: 'status', data: status, counter: messageCounter }));
 
-              console.log((new Date()) + ' ' + myName + ' opent chat met ' + herName + '.');
+              console.log(myName + ': ONLINE: chat met ' + herName);
 
               openConnections[ myName ] = { connection: connection, smallest: Math.min(myName, herName), largest: Math.max(myName, herName) };
 
@@ -112,7 +112,7 @@ var request = function(request) {
             // TODO: delete all messages according to data.gotMessage
             chats.bulk(docsToDelete, function(err, body) {
               if(!err) {
-                console.log('Geschiedenis bevestigd en verwijderd.');
+                console.log('BEVESTIGD: geschiedenis');
               }else{
                 console.log(err);
               }
@@ -121,23 +121,23 @@ var request = function(request) {
         }else{
           // Slechts 1 bericht bevestigd
           if(data.gotMessage.author === herName) {
-            console.log('Bericht door '+data.gotMessage.author+' bevestigd door '+myName);
+            console.log('BEVESTIGD: door '+myName);
 
             chats.destroy(data.gotMessage.id, data.gotMessage.rev, function(err, body) {
               if(!err) {
-                console.log('Bericht verwijderd.');
+                console.log('DATABASE: bericht verwijderd');
               }else{
                 console.log(err);
               }
             });
 
           }else{
-            console.log('Echter bevestigd door auteur zelf.');
+            console.log('BEVESTIGD: door '+myName+' (auteur)');
           }
         }
       } else {
         if(validChat) {
-          console.log(myName + ': ' + data);
+          console.log(myName + ': SAYS: ' + data);
 
           chats.insert({ body: message.utf8Data, author: myName, time: (new Date()).getTime(), smallest: Math.min(myName, herName), largest: Math.max(myName, herName) }, function(err, body) {
             if(err)
@@ -150,11 +150,9 @@ var request = function(request) {
  
   // Gebruiker sluit verbinding
   connection.on('close', function(connection) {
-    console.log((new Date()) + ' ' + myName + ' is weg.');
+    console.log(myName + ': OFFLINE: chat met ' + herName);
 
-    console.log(openConnections);
-    openConnections.splice(myName, 1);
-    console.log(openConnections);
+    delete openConnections[myName];
 
     // Als er aan het begin van de connectie minder dan 26 berichten verstuurd waren, dan moeten we de database even updaten zodat de counter de volgende keer up-to-date is
     if(messageCounterInit < 27) {
@@ -163,35 +161,37 @@ var request = function(request) {
         if (err) {
           console.log(err);
         }else{
-          console.log('Message counter bijgewerkt naar '+messageCounter);
+          console.log('MySQL: counter bijgewerkt naar '+messageCounter);
         }
       });
     }
   });
 };
 
-              // Nieuwe feed aanmaken die wijzigingen in de gaten houdt
-              var feed = chats.follow();
+var feed = chats.follow();
 
-              // Feed instellen
-              feed.db            = "http://127.0.0.1:5984/chats";
-              feed.since         = "now";
-              feed.filter        = "_view";
-              feed.view          = 'chats/by_time';
-              feed.include_docs  = true;
+// Feed instellen
+feed.db            = "http://127.0.0.1:5984/chats";
+feed.since         = "now";
+feed.filter        = "_view";
+feed.view          = 'chats/by_time';
+feed.include_docs  = true;
 
-              // Als er een wijziging is in de DB
-              feed.on('change', function(change) {
+// Als er een wijziging is in de DB
+feed.on('change', function(change) {
+  console.log('DATABASE: Change detected');
 
-                console.log('Change gedetecteerd');
+  var possibleConnections  = new Array;
+  var availableConnections = new Array;
 
-                var possibleConnections  = new Array;
-                var availableConnections = new Array;
+  if(openConnections[change.doc.smallest] !== undefined) possibleConnections.push(change.doc.smallest);
+  if(openConnections[change.doc.largest]  !== undefined) possibleConnections.push(change.doc.largest);
 
-                if(openConnections[change.doc.smallest] !== undefined) possibleConnections.push(change.doc.smallest);
-                if(openConnections[change.doc.largest]  !== undefined) possibleConnections.push(change.doc.largest);
+  console.log('DATABASE: change smallest ('+change.doc.smallest+') en largest ('+change.doc.largest+')');
 
-                console.log(possibleConnections);
+  console.log('Possible Connections:');
+
+  console.log(possibleConnections);
 
                 possibleConnections.forEach(function(con) {
                   if(openConnections[con].smallest === change.doc.smallest && openConnections[con].largest === change.doc.largest) {
