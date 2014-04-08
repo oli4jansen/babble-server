@@ -177,43 +177,45 @@ var request = function(request) {
 
 // Als er een wijziging is in de DB
 feed.on('change', function(change) {
-  console.log('DATABASE: Change detected');
+  if(change.deleted === undefined) {
+    console.log('DATABASE: Change detected');
 
-  console.log(change);
+    console.log(change);
 
-  var possibleConnections  = new Array;
-  var availableConnections = new Array;
+    var possibleConnections  = new Array;
+    var availableConnections = new Array;
 
-  if(openConnections[change.doc.smallest] !== undefined) possibleConnections.push(change.doc.smallest);
-  if(openConnections[change.doc.largest]  !== undefined) possibleConnections.push(change.doc.largest);
+    if(openConnections[change.doc.smallest] !== undefined) possibleConnections.push(change.doc.smallest);
+    if(openConnections[change.doc.largest]  !== undefined) possibleConnections.push(change.doc.largest);
 
-  possibleConnections.forEach(function(con) {
-    if(openConnections[con].smallest === change.doc.smallest && openConnections[con].largest === change.doc.largest) {
-      availableConnections.push(con);
-    }
-  });
-
-  console.log('Online personen:');
-  console.log(availableConnections);
-
-  if(availableConnections.length > 0) {
-    // Dan parsen we dat
-    var obj = {
-      id: change.doc._id,
-      rev: change.doc._rev,
-      time: (new Date()).getTime(),
-      text: change.doc.body,
-      author: change.doc.author
-    };
-    var json = JSON.stringify({ type:'message', data: obj });
-
-    console.log('Change in DB:');
-    console.log(json);
-    // En pushen we dat naar de huidige verbinding
-    availableConnections.forEach(function(con) {
-      openConnections[con].connection.sendUTF(json);
+    possibleConnections.forEach(function(con) {
+      if(openConnections[con].smallest === change.doc.smallest && openConnections[con].largest === change.doc.largest) {
+        availableConnections.push(con);
+      }
     });
 
+    console.log('Online personen:');
+    console.log(availableConnections);
+
+    if(availableConnections.length > 0) {
+      // Dan parsen we dat
+      var obj = {
+        id: change.doc._id,
+        rev: change.doc._rev,
+        time: (new Date()).getTime(),
+        text: change.doc.body,
+        author: change.doc.author
+      };
+      var json = JSON.stringify({ type:'message', data: obj });
+
+      console.log('Change in DB:');
+      console.log(json);
+      // En pushen we dat naar de huidige verbinding
+      availableConnections.forEach(function(con) {
+        openConnections[con].connection.sendUTF(json);
+      });
+
+    }
   }
 })
 feed.follow();
