@@ -118,11 +118,7 @@ var authenticate = function(req, res) {
           }
         }
       } catch(err) {
-        if(request!== undefined) {
-          request.end();
-          console.log('End request');
-        }
-        console.log('Catched error');
+        if(request!== undefined) request.end();
         res.send({ status: 500, data: err });
       }
     });
