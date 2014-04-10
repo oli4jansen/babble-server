@@ -98,7 +98,7 @@ var authenticate = function(req, res) {
               }
 
             } else {
-              console.log('The data you provided wasn\'t complete. Please fill in all fields.');
+//              console.log('The data you provided wasn\'t complete. Please fill in all fields.');
 
               var location = '';
               if(FBres.location !== undefined && FBres.location.name !== undefined) location = FBres.location.name;
@@ -390,7 +390,7 @@ var createLink = function(req, res){
               break;
             case 'dislike':
               // Ik sta niet pending en heb gedisliked: de ander zal mij nooit zien
-              var sql = 'INSERT INTO userLinksFinished (userId1, userId2, action) VALUES (?, ?, 0)';
+              var sql = 'REPLACE INTO userLinksFinished (userId1, userId2, action) VALUES (?, ?, 0)';
               connection.query(sql,
               [req.body.userIdMe, req.body.userIdHer],
               function(err, rows, fields) {
