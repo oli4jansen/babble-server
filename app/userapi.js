@@ -306,10 +306,13 @@ var uploadPicture = function(req, res){
 
   fs.readFile(req.files.file.path, function (err, data) {
 
+    if(err) console.log(err);
+
     var newPath = __dirname;
 
     fs.writeFile(newPath, data, function (err) {
       if(err) {
+        console.log(err);
         res.send({status: '500'});
       }else{
         res.send({status: '200'});
