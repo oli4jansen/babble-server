@@ -302,22 +302,28 @@ var deleteAccount = function(req, res){
 var uploadPicture = function(req, res){
   res.setHeader('Content-Type', 'application/json');
 
-  console.log(req.files);
+  console.log('Trying to open: '+req.files.file.path);
 
   fs.readFile(req.files.file.path, function (err, data) {
 
-    if(err) console.log(err);
+    if(err) {
+      console.log(err);
+      res.send({status: '500'});
+    }else{
+      console.log('Opened.');
 
-    var newPath = __dirname;
+      var newPath = __dirname;
+      console.log('New Path: '+newPath);
 
-    fs.writeFile(newPath, data, function (err) {
-      if(err) {
-        console.log(err);
-        res.send({status: '500'});
-      }else{
-        res.send({status: '200'});
-      }
-    });
+      fs.writeFile(newPath, data, function (err) {
+        if(err) {
+          console.log(err);
+          res.send({status: '500'});
+        }else{
+          res.send({status: '200'});
+        }
+      });
+    }
   });
 
 };
