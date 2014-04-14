@@ -1,4 +1,5 @@
 var FB         = require('fb');
+var fs         = require('fs');
 var mysql      = require('mysql');
 var http       = require('http');
 var connection = mysql.createConnection({
@@ -303,7 +304,18 @@ var uploadPicture = function(req, res){
 
   console.log(req.files);
 
-  res.send({status: '200'});
+  fs.readFile(req.files.file.path, function (err, data) {
+
+    var newPath = __dirname;
+
+    fs.writeFile(newPath, data, function (err) {
+      if(err) {
+        res.send({status: '500'});
+      }else{
+        res.send({status: '200'});
+      }
+    });
+  });
 
 };
 
