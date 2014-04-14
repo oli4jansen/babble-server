@@ -302,18 +302,13 @@ var deleteAccount = function(req, res){
 var uploadPicture = function(req, res){
   res.setHeader('Content-Type', 'application/json');
 
-  console.log('Trying to open: '+req.files.file.path);
-
   fs.readFile(req.files.file.path, function (err, data) {
 
     if(err) {
       console.log(err);
       res.send({status: '500'});
     }else{
-      console.log('Opened.');
-
-      var newPath = __dirname+'/'+req.files.file.originalFilename;
-      console.log('New Path: '+newPath);
+      var newPath = __dirname+'/static/'+req.files.file.originalFilename;
 
       fs.writeFile(newPath, data, function (err) {
         if(err) {

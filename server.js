@@ -21,7 +21,7 @@ var wsServer        = new webSocketServer({ httpServer: server });
 app.use(express.json());
 
 // Tijdelijk: document server om de client te dienen
-app.use(express.static(__dirname + '/../client/angular/'));
+app.use(express.static(__dirname+'/app/static'));
 
 app.configure(function(){
   app.use(express.methodOverride());
