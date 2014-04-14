@@ -57,6 +57,8 @@ app.get('/user/:userId', userAPI.get);
 app.put('/user/:userId', userAPI.update);
 app.delete('/user/:userId', userAPI.deleteAccount);
 
+app.post('/user/:userId/picture', userAPI.uploadPicture);
+
 app.get('/user/:userId/matches', userAPI.matches);
 app.get('/user/:userId/match/:matchId', userAPI.match);
 
