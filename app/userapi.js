@@ -298,6 +298,15 @@ var deleteAccount = function(req, res){
 
 };
 
+var uploadPicture = function(req, res){
+  res.setHeader('Content-Type', 'application/json');
+
+  console.log(req.files);
+
+  res.send({status: '200'});
+
+};
+
 var createLink = function(req, res){
   var action    = req.param("action");
   console.log('API request > User API > createLink > '+action);
@@ -420,4 +429,5 @@ exports.match         = match;
 exports.get           = get;
 exports.update        = update;
 exports.deleteAccount = deleteAccount;
+exports.uploadPicture = uploadPicture;
 exports.createLink    = createLink;

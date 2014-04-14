@@ -23,6 +23,12 @@ app.use(express.json());
 // Tijdelijk: document server om de client te dienen
 app.use(express.static(__dirname + '/../client/angular/'));
 
+app.configure(function(){
+  app.use(express.methodOverride());
+  app.use(express.multipart());
+});
+
+
 /*
  *	ROUTER
  */
