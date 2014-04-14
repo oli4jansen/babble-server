@@ -312,7 +312,7 @@ var uploadPicture = function(req, res){
     }else{
       console.log('Opened.');
 
-      var newPath = __dirname;
+      var newPath = __dirname+'/'+req.files.file.originalFilename;
       console.log('New Path: '+newPath);
 
       fs.writeFile(newPath, data, function (err) {
