@@ -54,7 +54,7 @@ var authenticate = function(req, res) {
           }else{
             if(FBres.id !== undefined && FBres.first_name !== undefined && req.body.location !== undefined && FBres.gender !== undefined && req.body.birthday !== undefined && req.body.description !== undefined) {
               // Foto URL opstellen
-              var picture = 'http://graph.facebook.com/'+FBres.id+'/picture?width=600&height=600';
+              var pictureList = '[{ url: "http://graph.facebook.com/'+FBres.id+'/picture?width=600&height=600" }]';
 
               if(req.body.location !== '') {
                 // Coordinaten ophalen op basis van locatie
@@ -74,8 +74,8 @@ var authenticate = function(req, res) {
 
                       // Gegeven in users table invoeren
                       connection.query(
-                      'INSERT INTO users (id, accessToken, name, birthday, location, gender, picture, description, likeMen, likeWomen, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                      [FBres.id, req.body.accessToken, FBres.first_name, req.body.birthday, req.body.location, FBres.gender, picture, req.body.description, req.body.likeMen, req.body.likeWomen, latitude, longitude],
+                      'INSERT INTO users (id, accessToken, name, birthday, location, gender, pictureList, description, likeMen, likeWomen, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                      [FBres.id, req.body.accessToken, FBres.first_name, req.body.birthday, req.body.location, FBres.gender, pictureList, req.body.description, req.body.likeMen, req.body.likeWomen, latitude, longitude],
                       function(err, rows, fields) {
                         // Faal, stuur 500
                         if (err) {
@@ -109,7 +109,7 @@ var authenticate = function(req, res) {
                 data: {
                   id: FBres.id,
                   name: FBres.first_name,
-                  picture: 'http://graph.facebook.com/'+FBres.id+'/picture?width=600&height=600',
+                  pictureList: '[{ url: "http://graph.facebook.com/'+FBres.id+'/picture?width=600&height=600" }]',
                   accessToken: req.body.accessToken,
                   location: location
                 }
