@@ -332,7 +332,45 @@ var uploadPicture = function(req, res){
       }
     });
   });
+};
 
+var updatePictureList = function(req, res){
+  res.setHeader('Content-Type', 'application/json');
+
+  if(req.body.accessToken !== undefined && req.body.pictureList !== undefined) {
+    var pictureList = JSON.parse(req.body.pictureList);
+    if(typeof pictureList === 'object') {
+      // Access token die we ontvangen hebben van client instellen
+      FB.setAccessToken(req.body.accessToken);
+
+      // Een facebook graph api request maken
+      FB.api('/me', { fields: ['id'] }, function(FBres){
+        if(!FBres || FBres.error || FBres.id !== req.param("userId")) {
+          console.log(!FBres ? 'error occurred' : FBres.error);
+          res.send({status: 500});
+          return;
+        }
+
+        connection.query(
+        'UPDATE users SET pictureList = ? WHERE id = ?',
+        [req.body.pictureList, FBres.id],
+        function(err, rows, fields) {
+          if (err){
+            console.log('MySQL error: '+err);
+            // Faal, gooi error
+            res.send({status: '500'});
+          }else{
+            // Gelukt, stuur 200
+            res.send({status: '200'});
+          }
+        });
+      });
+    }else{
+      res.send({status: '500'});
+    }
+  }else{
+    res.send({status: '500'});
+  }
 };
 
 var createLink = function(req, res){
@@ -450,12 +488,13 @@ var createLink = function(req, res){
 };
 
 
-exports.authenticate  = authenticate;
-exports.check         = check;
-exports.matches       = matches;
-exports.match         = match;
-exports.get           = get;
-exports.update        = update;
-exports.deleteAccount = deleteAccount;
-exports.uploadPicture = uploadPicture;
-exports.createLink    = createLink;
+exports.authenticate      = authenticate;
+exports.check             = check;
+exports.matches           = matches;
+exports.match             = match;
+exports.get               = get;
+exports.update            = update;
+exports.updatePictureList = updatePictureList;
+exports.deleteAccount     = deleteAccount;
+exports.uploadPicture     = uploadPicture;
+exports.createLink        = createLink;

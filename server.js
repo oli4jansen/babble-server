@@ -55,6 +55,7 @@ app.get('/user/:userId/check', userAPI.check);
 
 app.get('/user/:userId', userAPI.get);
 app.put('/user/:userId', userAPI.update);
+app.put('/user/:userId/pictureList', userAPI.updatePictureList);
 app.delete('/user/:userId', userAPI.deleteAccount);
 
 app.post('/user/:userId/picture', userAPI.uploadPicture);
