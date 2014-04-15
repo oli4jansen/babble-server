@@ -401,9 +401,9 @@ var createLink = function(req, res){
         // Faal, gooi error
         if (err) throw err;
 
+        // Als: huidige gebruiker staat pending
         if(rows[0].c > 0) {
-          // Huidige gebruiker staat pending
-          // Transactie beginnen want we willen deleten (pending) en inserten (finished) tegelijk
+          // Transactie beginnen want we zowel willen deleten (pending) als inserten (finished)
             connection.beginTransaction(function(err) {
               if (err) throw err;
 
@@ -439,7 +439,7 @@ var createLink = function(req, res){
 
 
 
-                    // TODO: Push notification versturen naar 'her'
+                    // Hier: push notifications versturen naar 'her'
 
 
 
