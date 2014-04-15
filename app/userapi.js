@@ -2,6 +2,8 @@ var FB         = require('fb');
 var fs         = require('fs');
 var mysql      = require('mysql');
 var http       = require('http');
+
+// Dit zou naar een config file moeten
 var connection = mysql.createConnection({
   host     : 'localhost',
   port     : '3306',
@@ -10,6 +12,7 @@ var connection = mysql.createConnection({
 });
 connection.query('USE babble');
 
+// Dit zou ook naar een config file moeten
 var bingMapsKey = 'AsrEVvWtouDR82GoF9DjxzJuzBu9qOyytqtiApge__EnBY6YYZ22WuPvpgUPep56';
 
 var authenticate = function(req, res) {
@@ -97,10 +100,7 @@ var authenticate = function(req, res) {
               } else {
                 throw 'Please provide us with a valid location. We can\'t find people near you if we don\'t know where you are.';
               }
-
             } else {
-//              console.log('The data you provided wasn\'t complete. Please fill in all fields.');
-
               var location = '';
               if(FBres.location !== undefined && FBres.location.name !== undefined) location = FBres.location.name;
 
@@ -351,9 +351,8 @@ var updatePictureList = function(req, res){
           return;
         }
 
-        connection.query(
-        'UPDATE users SET pictureList = ? WHERE id = ?',
-        [req.body.pictureList, FBres.id],
+        // De nieuwe foto lijst in de database pushen
+        connection.query('UPDATE users SET pictureList = ? WHERE id = ?', [req.body.pictureList, FBres.id],
         function(err, rows, fields) {
           if (err){
             console.log('MySQL error: '+err);
