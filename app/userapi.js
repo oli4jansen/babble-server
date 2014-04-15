@@ -343,7 +343,7 @@ var updatePictureList = function(req, res){
 
   if(req.body.accessToken !== undefined && req.body.pictureList !== undefined) {
     var pictureList = JSON.parse(req.body.pictureList);
-    if(typeof pictureList === 'object') {
+    if(pictureList instanceof Array) {
       // Access token die we ontvangen hebben van client instellen
       FB.setAccessToken(req.body.accessToken);
 
