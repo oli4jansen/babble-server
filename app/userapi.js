@@ -302,6 +302,8 @@ var deleteAccount = function(req, res){
 var uploadPicture = function(req, res){
   res.setHeader('Content-Type', 'application/json');
 
+  console.log('API request > User API > picture upload');
+
   // Access token die we ontvangen hebben van client instellen
   FB.setAccessToken(req.body.accessToken);
 
@@ -336,6 +338,8 @@ var uploadPicture = function(req, res){
 
 var updatePictureList = function(req, res){
   res.setHeader('Content-Type', 'application/json');
+
+  console.log('API request > User API > picture list update');
 
   if(req.body.accessToken !== undefined && req.body.pictureList !== undefined) {
     var pictureList = JSON.parse(req.body.pictureList);
