@@ -302,23 +302,35 @@ var deleteAccount = function(req, res){
 var uploadPicture = function(req, res){
   res.setHeader('Content-Type', 'application/json');
 
-  fs.readFile(req.files.file.path, function (err, data) {
+  // Access token die we ontvangen hebben van client instellen
+  FB.setAccessToken(req.body.accessToken);
 
-    if(err) {
-      console.log(err);
-      res.send({status: '500'});
-    }else{
-      var newPath = __dirname+'/static/'+req.files.file.originalFilename;
-
-      fs.writeFile(newPath, data, function (err) {
-        if(err) {
-          console.log(err);
-          res.send({status: '500'});
-        }else{
-          res.send({status: '200'});
-        }
-      });
+  // Een facebook graph api request maken
+  FB.api('/me', { fields: ['id'] }, function(FBres){
+    if(!FBres || FBres.error) {
+      console.log(!FBres ? 'error occurred' : FBres.error);
+      res.send({status: 500});
+      return;
     }
+
+    fs.readFile(req.files.file.path, function (err, data) {
+
+      if(err) {
+        console.log(err);
+        res.send({status: '500'});
+      }else{
+        var newPath = __dirname+'/static/profile-pictures/'+FBres.id+'-'+req.files.file.originalFilename;
+
+        fs.writeFile(newPath, data, function (err) {
+          if(err) {
+            console.log(err);
+            res.send({status: '500'});
+          }else{
+            res.send({status: '200'});
+          }
+        });
+      }
+    });
   });
 
 };
