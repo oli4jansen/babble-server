@@ -104,15 +104,12 @@ var authenticate = function(req, res) {
               var location = '';
               if(FBres.location !== undefined && FBres.location.name !== undefined) location = FBres.location.name;
 
-              var pictureUrl = 'http://graph.facebook.com/'+FBres.id+'/picture?width=600&height=600';
-              var pictureList = [ { url: pictureUrl } ];
-
               res.send({
                 status: 206,
                 data: {
                   id: FBres.id,
                   name: FBres.first_name,
-                  pictureList: JSON.parse(pictureList),
+                  pictureList: JSON.stringify([ { url: 'http://graph.facebook.com/'+FBres.id+'/picture?width=600&height=600' } ]),
                   accessToken: req.body.accessToken,
                   location: location
                 }
