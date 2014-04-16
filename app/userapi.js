@@ -52,10 +52,7 @@ var authenticate = function(req, res) {
             }
 
           }else{
-            if(FBres.id !== undefined && FBres.first_name !== undefined && req.body.location !== undefined && FBres.gender !== undefined && req.body.birthday !== undefined && req.body.description !== undefined) {
-              // Foto URL opstellen
-              var pictureList = '[{ url: "http://graph.facebook.com/'+FBres.id+'/picture?width=600&height=600" }]';
-
+            if(FBres.id !== undefined && FBres.first_name !== undefined && req.body.pictureList !== undefined && req.body.location !== undefined && FBres.gender !== undefined && req.body.birthday !== undefined && req.body.description !== undefined) {
               if(req.body.location !== '') {
                 // Coordinaten ophalen op basis van locatie
                 var latitude = '';
