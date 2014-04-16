@@ -72,7 +72,7 @@ var authenticate = function(req, res) {
                       // Gegeven in users table invoeren
                       connection.query(
                       'INSERT INTO users (id, accessToken, name, birthday, location, gender, pictureList, description, likeMen, likeWomen, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                      [FBres.id, req.body.accessToken, FBres.first_name, req.body.birthday, req.body.location, FBres.gender, pictureList, req.body.description, req.body.likeMen, req.body.likeWomen, latitude, longitude],
+                      [FBres.id, req.body.accessToken, FBres.first_name, req.body.birthday, req.body.location, FBres.gender, req.body.pictureList, req.body.description, req.body.likeMen, req.body.likeWomen, latitude, longitude],
                       function(err, rows, fields) {
                         // Faal, stuur 500
                         if (err) {
