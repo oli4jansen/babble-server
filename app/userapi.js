@@ -109,7 +109,7 @@ var authenticate = function(req, res) {
                 data: {
                   id: FBres.id,
                   name: FBres.first_name,
-                  pictureList: '[{ url: "http://graph.facebook.com/'+FBres.id+'/picture?width=600&height=600" }]',
+                  pictureList: JSON.parse([{ url: "http://graph.facebook.com/"+FBres.id+"/picture?width=600&height=600" }]),
                   accessToken: req.body.accessToken,
                   location: location
                 }
