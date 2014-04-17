@@ -172,7 +172,7 @@ var matches = function(req, res){
 
   res.setHeader('Content-Type', 'application/json');
 
-  connection.query('SELECT DISTINCT u.name, u.id, u.picture, l.action FROM userLinksFinished l INNER JOIN users u ON ( u.id = l.userId1 AND l.userId2 = ? ) OR (u.id = l.userId2 AND l.userId1 = ?) WHERE l.action > 0', [userId, userId],function(err, rows, fields) {
+  connection.query('SELECT DISTINCT u.name, u.id, u.pictureList, l.action FROM userLinksFinished l INNER JOIN users u ON ( u.id = l.userId1 AND l.userId2 = ? ) OR (u.id = l.userId2 AND l.userId1 = ?) WHERE l.action > 0', [userId, userId],function(err, rows, fields) {
     if (err) {
       console.log(err);
       res.send({status: '404'});
