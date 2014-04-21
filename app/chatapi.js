@@ -32,8 +32,8 @@ var request = function(request) {
   var myName = false;
   var herName = false;
   var validChat = false;
-  var messageCounterInit = 25;
-  var messageCounter = 25;
+  var messageCounterInit = 1;
+  var messageCounter = 1;
 
   // Als er een bericht verstuurd is:
   connection.on('message', function(message) {
