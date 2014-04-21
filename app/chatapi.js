@@ -66,7 +66,7 @@ var request = function(request) {
                 var status = 'visible';
               }
               // Aan client bevestigen dat er verbinding gemaakt is
-              connection.sendUTF(JSON.stringify({ type: 'status', data: status, counter: messageCounter }));
+              connection.sendUTF(JSON.stringify({ type: 'status', data: status, counter: messageCounterInit }));
 
               console.log(myName + ': ONLINE: chat met ' + herName);
 
