@@ -70,7 +70,7 @@ var request = function(request) {
 
               console.log(myName + ': ONLINE: chat met ' + herName);
 
-              openConnections[ myName ] = { connection: connection, smallest: Math.min(myName, herName), largest: Math.max(myName, herName), messageCounter: rows[0].action };
+              openConnections[ myName ] = { connection: connection, smallest: Math.min(myName, herName), largest: Math.max(myName, herName), messageCounter: rows[0].action, status: status };
 
               // Document naam is het laagste ID + het hoogste ID van de twee chatters;
               // Bij 114056 die chat met 114904 zou de chatnaam zijn: '114056+114904'
@@ -213,7 +213,11 @@ feed.on('change', function(change) {
       // En pushen we dat naar de huidige verbinding
       availableConnections.forEach(function(con) {
         openConnections[con].connection.sendUTF(json);
-        openConnections[con].messageCounter++;
+
+        if(openConnections[con].messageCounter < 27) {
+          openConnections[con].messageCounter++;
+          openConnections[con].connection.sendUTF(JSON.stringify({ type: 'update', counter: openConnections[con].messageCounter }));
+        }
       });
 
     }
