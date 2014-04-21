@@ -1,4 +1,7 @@
+// CONFIG
+var nano              = require('nano')('http://127.0.0.1:5984');
 var mysql             = require('mysql');
+var chats             = nano.db.use('chats');
 var mysqlConnection   = mysql.createConnection({
   host     : 'localhost',
   port     : '3306',
@@ -7,20 +10,18 @@ var mysqlConnection   = mysql.createConnection({
 });
 mysqlConnection.query('USE babble');
 
-var nano              = require('nano')('http://127.0.0.1:5984');
-var chats             = nano.db.use('chats');
-
+// Feed met chat database instellen
 var feed = chats.follow();
-
-// Feed instellen
 feed.db            = "http://127.0.0.1:5984/chats";
 feed.since         = "now";
 feed.filter        = "_view";
 feed.view          = 'chats/by_time';
 feed.include_docs  = true;
 
+// Algemene lijst met alle open connecties
 var openConnections = {};
 
+// Voor elke request wordt het volgende uitgevoerd
 var request = function(request) {
   console.log('API request > Chats API > request');
 
@@ -56,10 +57,8 @@ var request = function(request) {
           }else{
             if(rows[0].action > 0) {
               if(rows[0].action < 27) {
-                // De counters opzetten, het te halen aantal berichten is nog niet gehaald.
+                // De counter opzetten, het te halen aantal berichten is nog niet gehaald.
                 messageCounterInit = rows[0].action;
-                messageCounter = rows[0].action;
-
 
                 // De status van dit gesprek is fase 1
                 var status = 'hidden';
@@ -71,9 +70,7 @@ var request = function(request) {
 
               console.log(myName + ': ONLINE: chat met ' + herName);
 
-              openConnections[ myName ] = { connection: connection, smallest: Math.min(myName, herName), largest: Math.max(myName, herName) };
-
-              console.log(openConnections);
+              openConnections[ myName ] = { connection: connection, smallest: Math.min(myName, herName), largest: Math.max(myName, herName), messageCounter: rows[0].action };
 
               // Document naam is het laagste ID + het hoogste ID van de twee chatters;
               // Bij 114056 die chat met 114904 zou de chatnaam zijn: '114056+114904'
@@ -159,19 +156,22 @@ var request = function(request) {
   connection.on('close', function(connection) {
     console.log(myName + ': OFFLINE: chat met ' + herName);
 
-    delete openConnections[myName];
 
     // Als er aan het begin van de connectie minder dan 26 berichten verstuurd waren, dan moeten we de database even updaten zodat de counter de volgende keer up-to-date is
     if(messageCounterInit < 27) {
+      console.log('MessageCounterInit < 27');
       // update query
-      mysqlConnection.query('UPDATE userLinksFinished SET action = ? WHERE (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [messageCounter, myName, herName, herName, myName], function(err, rows, fields) {
+      mysqlConnection.query('UPDATE userLinksFinished SET action = ? WHERE (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [openConnections[myName].messageCounter, myName, herName, herName, myName], function(err, rows, fields) {
         if (err) {
           console.log(err);
         }else{
-          console.log('MySQL: counter bijgewerkt naar '+messageCounter);
+          console.log('MySQL: counter bijgewerkt van '+messageCounterInit+' naar '+openConnections[myName].messageCounter);
         }
       });
     }
+
+    delete openConnections[myName];
+
   });
 };
 
@@ -213,6 +213,7 @@ feed.on('change', function(change) {
       // En pushen we dat naar de huidige verbinding
       availableConnections.forEach(function(con) {
         openConnections[con].connection.sendUTF(json);
+        openConnections[con].messageCounter++;
       });
 
     }
