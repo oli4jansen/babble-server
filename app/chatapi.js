@@ -167,10 +167,9 @@ var request = function(request) {
         }else{
           console.log('MySQL: counter bijgewerkt van '+messageCounterInit+' naar '+openConnections[myName].messageCounter);
         }
+        delete openConnections[myName];
       });
     }
-
-    delete openConnections[myName];
 
   });
 };
