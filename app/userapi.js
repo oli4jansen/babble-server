@@ -325,7 +325,7 @@ var uploadPicture = function(req, res){
             console.log(err);
             res.send({status: '500'});
           }else{
-            res.send({status: '200'});
+            res.send({status: '200', location: 'http://www.oli4jansen.nl:81/profile-pictures/'+FBres.id+'-'+req.files.file.originalFilename});
           }
         });
       }
