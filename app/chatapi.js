@@ -34,9 +34,12 @@ var request = function(request) {
   var connection = request.accept(null, request.origin);
 
   // Shit die ingesteld moet worden voordat gechat kan worden
-  var myName = false;
-  var herName = false;
+  var myId      = false;
+  var myName    = false;
+  var herID     = false;
+  var herName   = false;
   var validChat = false;
+
   var messageCounterInit = 1;
   var messageCounter = 1;
 
@@ -51,12 +54,12 @@ var request = function(request) {
       }
       // Naam is leeg; dus er moet nog geregistreerd worden.
       // Eerste bericht is registratie bericht:
-      if (myName === false) {
+      if (myID === false) {
 
-        myName = data.myName; // naam van degene die verbinding maakt
-        herName = data.herName; // naam van de chatpartner
+        myID = data.myName; // naam van degene die verbinding maakt
+        herID = data.herName; // naam van de chatpartner
 
-        mysqlConnection.query('SELECT action FROM userLinksFinished WHERE (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [myName, herName, herName, myName], function(err, rows, fields) {
+        mysqlConnection.query('SELECT l.action AS action, u1.name AS u1Name, u1.id AS u1Id, u2.name AS u2Name FROM userLinksFinished AS l INNER JOIN users AS u1 ON u1.id = l.userId1 INNER JOIN users AS u2 ON u2.id = l.userId2 WHERE  (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [myID, herID, herID, myID], function(err, rows, fields) {
           if (err) {
             console.log(err);
           }else{
@@ -73,17 +76,31 @@ var request = function(request) {
               // Aan client bevestigen dat er verbinding gemaakt is
               connection.sendUTF(JSON.stringify({ type: 'status', data: status, counter: messageCounterInit }));
 
-              console.log(myName + ': ONLINE: chat met ' + herName);
+              console.log(myID + ': ONLINE: chat met ' + herID);
 
-              openConnections[ myName ] = { connection: connection, smallest: Math.min(myName, herName), largest: Math.max(myName, herName), messageCounter: rows[0].action, status: status };
+              if(rows[0].u1Id === myID) {
+                myName  = rows[0].u1Name;
+                herName = rows[0].u2Name;
+              }else{
+                myName  = rows[0].u2Name;
+                herName = rows[0].u1Name;
+              }
+
+              openConnections[ myID ] = {
+                connection: connection,
+                smallest: Math.min(myID, herID),
+                largest: Math.max(myID, herID),
+                herName: herName,
+                messageCounter: rows[0].action, status: status
+              };
 
               // Document naam is het laagste ID + het hoogste ID van de twee chatters;
               // Bij 114056 die chat met 114904 zou de chatnaam zijn: '114056+114904'
               validChat = true;
 
-              chats.view('chats', 'by_time?startkey=%5B'+Math.min(myName, herName)+','+Math.max(myName, herName)+',0%5D&endkey=%5B'+Math.min(myName, herName)+','+Math.max(myName, herName)+',9999999999999999999%5D', function(err, body) {
+              chats.view('chats', 'by_time?startkey=%5B'+Math.min(myID, herID)+','+Math.max(myID, herID)+',0%5D&endkey=%5B'+Math.min(myID, herID)+','+Math.max(myID, herID)+',9999999999999999999%5D', function(err, body) {
                 if (!err) {
-                  if(body.rows.length > 0 && body.rows[body.rows.length-1].value.author !== myName) {
+                  if(body.rows.length > 0 && body.rows[body.rows.length-1].value.author !== myID) {
                     var messages = [];
                     body.rows.forEach(function(doc) {
                       var obj = {
@@ -129,8 +146,8 @@ var request = function(request) {
           }
         }else{
           // Slechts 1 bericht bevestigd
-          if(data.gotMessage.author === herName) {
-            console.log('BEVESTIGD: door '+myName);
+          if(data.gotMessage.author === herID) {
+            console.log('BEVESTIGD: door '+myID);
 
             chats.destroy(data.gotMessage.id, data.gotMessage.rev, function(err, body) {
               if(!err) {
@@ -141,14 +158,14 @@ var request = function(request) {
             });
 
           }else{
-            console.log('BEVESTIGD: door '+myName+' (auteur)');
+            console.log('BEVESTIGD: door '+myID+' (auteur)');
           }
         }
       } else {
         if(validChat) {
-          console.log(myName + ': SAYS: ' + data);
+          console.log(myID + ': SAYS: ' + data);
 
-          chats.insert({ body: message.utf8Data, author: myName, time: (new Date()).getTime(), smallest: Math.min(myName, herName), largest: Math.max(myName, herName) }, function(err, body) {
+          chats.insert({ body: message.utf8Data, author: myID, time: (new Date()).getTime(), smallest: Math.min(myID, herID), largest: Math.max(myID, herID) }, function(err, body) {
             if(err) {
               console.log(err);
             }else{
@@ -160,10 +177,10 @@ var request = function(request) {
                   timeToLive: 3,
                   data: {
                       type: 'chat',
-                      herId: herName,
+                      herId: myId,
                       herName: 'unknown',
                       title: 'You\'ve got a message!',
-                      message: 'An unknown person sent you a message.'
+                      message: myName+' sent you a message.'
                   }
               });
 
@@ -182,20 +199,20 @@ var request = function(request) {
 
   // Gebruiker sluit verbinding
   connection.on('close', function(connection) {
-    console.log(myName + ': OFFLINE: chat met ' + herName);
+    console.log(myID + ': OFFLINE: chat met ' + herID);
 
 
     // Als er aan het begin van de connectie minder dan 26 berichten verstuurd waren, dan moeten we de database even updaten zodat de counter de volgende keer up-to-date is
     if(messageCounterInit < 27) {
       console.log('MessageCounterInit < 27');
       // update query
-      mysqlConnection.query('UPDATE userLinksFinished SET action = ? WHERE (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [openConnections[myName].messageCounter, myName, herName, herName, myName], function(err, rows, fields) {
+      mysqlConnection.query('UPDATE userLinksFinished SET action = ? WHERE (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [openConnections[myID].messageCounter, myID, herID, herID, myID], function(err, rows, fields) {
         if (err) {
           console.log(err);
         }else{
-          console.log('MySQL: counter bijgewerkt van '+messageCounterInit+' naar '+openConnections[myName].messageCounter);
+          console.log('MySQL: counter bijgewerkt van '+messageCounterInit+' naar '+openConnections[myID].messageCounter);
         }
-        delete openConnections[myName];
+        delete openConnections[myID];
       });
     }
 
