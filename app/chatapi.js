@@ -177,7 +177,7 @@ var request = function(request) {
                   timeToLive: 3,
                   data: {
                       type: 'chat',
-                      herId: myId,
+                      herId: myID,
                       herName: 'unknown',
                       title: 'You\'ve got a message!',
                       message: myName+' sent you a message.'
