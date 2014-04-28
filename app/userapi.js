@@ -2,6 +2,7 @@ var FB         = require('fb');
 var fs         = require('fs');
 var mysql      = require('mysql');
 var http       = require('http');
+var gcm        = require('node-gcm');
 
 // Dit zou naar een config file moeten
 var connection = mysql.createConnection({
@@ -277,6 +278,11 @@ var deleteAccount = function(req, res){
                 throw err;
               });
             }
+
+            // TODO:
+            // Delete photo's by user.
+            // Delete chat messages by user.
+
             connection.commit(function(err) {
               if (err) {
                 connection.rollback(function() {
@@ -487,6 +493,57 @@ var createLink = function(req, res){
   }
 };
 
+var pushNotification = function(req, res) {
+  // create a message with default values
+  var message = new gcm.Message();
+
+  // or with object values
+  var message = new gcm.Message({
+      collapseKey: 'demo',
+      delayWhileIdle: false,
+      timeToLive: 3,
+      data: {
+          key1: 'Hallo persoon 1',
+          key2: 'Hallo persoon 2'
+      }
+  });
+
+  var sender = new gcm.Sender('AIzaSyBYlL5hyNUA1rtwZwT30ZKb9zMXswA_AQk');
+  var registrationIds = [];
+
+  // OPTIONAL
+  // add new key-value in data object
+/*  message.addDataWithKeyValue('key1','message1');
+  message.addDataWithKeyValue('key2','message2');
+
+  // or add a data object
+  message.addDataWithObject({
+      key1: 'message1',
+      key2: 'message2'
+  });
+
+  // or with backwards compability of previous versions
+  message.addData('key1','message1');
+  message.addData('key2','message2');
+
+  message.collapseKey = 'demo';
+  message.delayWhileIdle = true;
+  message.timeToLive = 3;
+  message.dryRun = true;
+  // END OPTIONAL*/
+
+  // At least one required
+//  registrationIds.push('regId1');
+  registrationIds.push('regId2'); 
+
+  /**
+   * Params: message-literal, registrationIds-array, No. of retries, callback-function
+   **/
+  sender.send(message, registrationIds, 4, function (err, result) {
+      res.send(result);
+  });
+};
+
 
 exports.authenticate      = authenticate;
 exports.check             = check;
@@ -498,3 +555,5 @@ exports.updatePictureList = updatePictureList;
 exports.deleteAccount     = deleteAccount;
 exports.uploadPicture     = uploadPicture;
 exports.createLink        = createLink;
+
+exports.pushNotification  = pushNotification;
