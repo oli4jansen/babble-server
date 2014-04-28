@@ -536,23 +536,22 @@ var regid = function(req, res){
       // Een facebook graph api request maken
       FB.api('/me', { fields: ['id'] }, function(FBres){
         if(!FBres || FBres.error || FBres.id !== req.param("userId")) {
-          console.log(!FBres ? 'error occurred' : FBres.error);
+          console.log(!FBres ? 'error occurred' : FBres);
           res.send({status: 500});
-          return;
+        }else{
+          // De nieuwe foto lijst in de database pushen
+          connection.query('UPDATE users SET GCMRegIDList = ? WHERE id = ?', [req.body.regIdList, FBres.id],
+          function(err, rows, fields) {
+            if (err){
+              console.log('MySQL error: '+err);
+              // Faal, gooi error
+              res.send({status: '500'});
+            }else{
+              // Gelukt, stuur 200
+              res.send({status: '200'});
+            }
+          });
         }
-
-        // De nieuwe foto lijst in de database pushen
-        connection.query('UPDATE users SET GCMRegIDList = ? WHERE id = ?', [req.body.regIdList, FBres.id],
-        function(err, rows, fields) {
-          if (err){
-            console.log('MySQL error: '+err);
-            // Faal, gooi error
-            res.send({status: '500'});
-          }else{
-            // Gelukt, stuur 200
-            res.send({status: '200'});
-          }
-        });
       });
     }else{
       res.send({status: '500'});
