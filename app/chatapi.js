@@ -211,8 +211,11 @@ feed.on('change', function(change) {
   // We zijn niet geinteresseerd in delete-changes
   if(change.deleted === undefined) {
 
-    var IDToSendNotification = change.doc.smallest;
-    if(change.doc.smallest === change.doc.author) IDToSendNotification = change.doc.largest;
+    if(change.doc.smallest === change.doc.author) {
+      var IDToSendNotification = change.doc.largest;
+    }else{
+      var IDToSendNotification = change.doc.smallest;
+    }
 
     mysqlConnection.query('SELECT GCMRegIDList FROM users WHERE id = ?', [IDToSendNotification], function(err, rows, fields) {
       if (err) {
@@ -223,10 +226,10 @@ feed.on('change', function(change) {
           delayWhileIdle: true,
           data: {
             type: 'chat',
-            herId: myID,
+            herId: change.doc.author,
             herName: 'unknown',
-            title: 'You\'ve got a message!',
-            message: myName+' sent you a message.'
+            title: change.doc.author+' send you a message.',
+            message: 'That\'s right.'
           }
         });
 
