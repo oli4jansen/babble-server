@@ -59,7 +59,7 @@ var request = function(request) {
         myID = data.myName; // naam van degene die verbinding maakt
         herID = data.herName; // naam van de chatpartner
 
-        mysqlConnection.query('SELECT l.action AS action, u1.name AS u1Name, u1.id AS u1Id, u2.name AS u2Name FROM userLinksFinished AS l INNER JOIN users AS u1 ON u1.id = l.userId1 INNER JOIN users AS u2 ON u2.id = l.userId2 WHERE  (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [myID, herID, herID, myID], function(err, rows, fields) {
+        mysqlConnection.query('SELECT l.action AS action, u1.name AS u1Name, u1.GCMRegIDList AS u1GCMRegIDList, u1.id AS u1Id, u2.name AS u2Name, u2.GCMRegIDList AS u2GCMRegIDList FROM userLinksFinished AS l INNER JOIN users AS u1 ON u1.id = l.userId1 INNER JOIN users AS u2 ON u2.id = l.userId2 WHERE  (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [myID, herID, herID, myID], function(err, rows, fields) {
           if (err) {
             console.log(err);
           }else{
@@ -81,9 +81,11 @@ var request = function(request) {
               if(rows[0].u1Id === myID) {
                 myName  = rows[0].u1Name;
                 herName = rows[0].u2Name;
+                var herRegIDList = rows[0].u2GCMRegIDList;
               }else{
                 myName  = rows[0].u2Name;
                 herName = rows[0].u1Name;
+                var herRegIDList = rows[0].u1GCMRegIDList;
               }
 
               openConnections[ myID ] = {
@@ -91,6 +93,7 @@ var request = function(request) {
                 smallest: Math.min(myID, herID),
                 largest: Math.max(myID, herID),
                 herName: herName,
+                herRegIDList: herRegIDList,
                 messageCounter: rows[0].action, status: status
               };
 
@@ -165,31 +168,15 @@ var request = function(request) {
         if(validChat) {
           console.log(myID + ': SAYS: ' + data);
 
-          chats.insert({ body: message.utf8Data, author: myID, time: (new Date()).getTime(), smallest: Math.min(myID, herID), largest: Math.max(myID, herID) }, function(err, body) {
+          chats.insert({
+            body: message.utf8Data,
+            author: myID,
+            time: (new Date()).getTime(),
+            smallest: Math.min(myID, herID),
+            largest: Math.max(myID, herID)
+          }, function(err, body) {
             if(err) {
               console.log(err);
-            }else{
-              // TODO: checken of deze gebruiker niet al online is, dan hoeft er geen notification verstuurd te worden
-
-              var message = new gcm.Message({
-                  collapseKey: 'BabbleChat',
-                  delayWhileIdle: true,
-                  timeToLive: 3,
-                  data: {
-                      type: 'chat',
-                      herId: myID,
-                      herName: 'unknown',
-                      title: 'You\'ve got a message!',
-                      message: myName+' sent you a message.'
-                  }
-              });
-
-              var registrationIds = [];
-              registrationIds.push('APA91bGZK8JRnJ3OZwy4aQnG4Q7BZsKCOEkH0o9wNtPbTH2AmUj__JBStL0kcXRaPDtHPtTAPVE9PYPdjbrGgKr2OI-w-YE9dXIB80H2Ry1KoO9L_8kqCNx39d6BFhAmv7EzM026NMk98a9KUp5Y_FhbchfBz1ov7g');
-
-              GCMSender.send(message, registrationIds, 4, function (err, result) {
-                if(err) console.log(err);
-              });
             }
           });
         }
@@ -204,7 +191,7 @@ var request = function(request) {
 
     // Als er aan het begin van de connectie minder dan 26 berichten verstuurd waren, dan moeten we de database even updaten zodat de counter de volgende keer up-to-date is
     if(messageCounterInit < 27) {
-      console.log('MessageCounterInit < 27');
+//      console.log('MessageCounterInit < 27');
       // update query
       mysqlConnection.query('UPDATE userLinksFinished SET action = ? WHERE (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [openConnections[myID].messageCounter, myID, herID, herID, myID], function(err, rows, fields) {
         if (err) {
@@ -221,10 +208,39 @@ var request = function(request) {
 
 // Als er een wijziging is in de DB
 feed.on('change', function(change) {
+  // We zijn niet geinteresseerd in delete-changes
   if(change.deleted === undefined) {
-    console.log('DATABASE: Change detected');
 
-    console.log(change);
+    var IDToSendNotification = change.doc.smallest;
+    if(change.doc.smallest === change.doc.author) IDToSendNotification = change.doc.largest;
+
+    mysqlConnection.query('SELECT GCMRegIDList FROM users WHERE id = ?', [IDToSendNotification], function(err, rows, fields) {
+      if (err) {
+        console.log(err);
+      }else{
+        var message = new gcm.Message({
+          collapseKey: 'BabbleChat',
+          delayWhileIdle: true,
+          data: {
+            type: 'chat',
+            herId: myID,
+            herName: 'unknown',
+            title: 'You\'ve got a message!',
+            message: myName+' sent you a message.'
+          }
+        });
+
+        var registrationIds = [];
+        var GCMRegIDList = JSON.parse(rows[0].GCMRegIDList);
+        for(var i=0;i<GCMRegIDList.length;i++) {
+          if(GCMRegIDList[i] !== null) registrationIds.push(GCMRegIDList[i]);
+        }
+
+        GCMSender.send(message, registrationIds, 4, function (err, result) {
+          if(err) console.log(err);
+        });
+      }
+    });
 
     var possibleConnections  = new Array;
     var availableConnections = new Array;
@@ -238,9 +254,6 @@ feed.on('change', function(change) {
       }
     });
 
-    console.log('Online personen:');
-    console.log(availableConnections);
-
     if(availableConnections.length > 0) {
       // Dan parsen we dat
       var obj = {
@@ -252,8 +265,6 @@ feed.on('change', function(change) {
       };
       var json = JSON.stringify({ type:'message', data: obj });
 
-      console.log('Change in DB:');
-      console.log(json);
       // En pushen we dat naar de huidige verbinding
       availableConnections.forEach(function(con) {
         openConnections[con].connection.sendUTF(json);
