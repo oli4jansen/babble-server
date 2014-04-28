@@ -211,14 +211,18 @@ feed.on('change', function(change) {
   // We zijn niet geinteresseerd in delete-changes
   if(change.deleted === undefined) {
 
-    console.log('Auteur van bericht: '+change.doc.author);
+    console.log('Auteur: '+change.doc.author);
+    console.log('Smallest: '+change.doc.smallest);
+    console.log('Largest: '+change.doc.largest);
 
     if(change.doc.smallest === change.doc.author) {
       var IDToSendNotification = change.doc.largest;
       console.log('Send notification to '+IDToSendNotification+' (largest)');
-    }else{
+    }else if(change.doc.largest === change.doc.author){
       var IDToSendNotification = change.doc.smallest;
       console.log('Send notification to '+IDToSendNotification+' (smallest)');
+    }else{
+      console.log('Geen van beiden is de auteur...');
     }
 
     mysqlConnection.query('SELECT GCMRegIDList FROM users WHERE id = ?', [IDToSendNotification], function(err, rows, fields) {
