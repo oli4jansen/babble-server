@@ -211,10 +211,14 @@ feed.on('change', function(change) {
   // We zijn niet geinteresseerd in delete-changes
   if(change.deleted === undefined) {
 
+    console.log('Auteur van bericht: '+change.doc.author);
+
     if(change.doc.smallest === change.doc.author) {
       var IDToSendNotification = change.doc.largest;
+      console.log('Send notification to '+IDToSendNotification+' (largest)');
     }else{
       var IDToSendNotification = change.doc.smallest;
+      console.log('Send notification to '+IDToSendNotification+' (smallest)');
     }
 
     mysqlConnection.query('SELECT GCMRegIDList FROM users WHERE id = ?', [IDToSendNotification], function(err, rows, fields) {
@@ -241,6 +245,7 @@ feed.on('change', function(change) {
 
         GCMSender.send(message, registrationIds, 4, function (err, result) {
           if(err) console.log(err);
+          console.log(result);
         });
       }
     });
