@@ -59,6 +59,7 @@ app.put('/user/:userId/pictureList', userAPI.updatePictureList);
 app.delete('/user/:userId', userAPI.deleteAccount);
 
 app.post('/user/:userId/picture', userAPI.uploadPicture);
+app.post('/user/:userId/regid', userAPI.regid);
 
 app.get('/user/:userId/matches', userAPI.matches);
 app.get('/user/:userId/match/:matchId', userAPI.match);
@@ -69,7 +70,6 @@ app.post('/user/:action', userAPI.createLink);
 app.post('/feed/:userId/:offset/:gender/:likeMen/:likeWomen/:latCoord/:longCoord/:searchRadius', feedAPI.feed);
 
 
-app.post('/user/regid', userAPI.regid);
 app.get('/pushNotification', userAPI.pushNotification);
 
 // Express aan port 80 koppelen
