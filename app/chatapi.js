@@ -1,6 +1,7 @@
 // CONFIG
 var nano              = require('nano')('http://127.0.0.1:5984');
 var mysql             = require('mysql');
+var gcm               = require('node-gcm');
 var chats             = nano.db.use('chats');
 var mysqlConnection   = mysql.createConnection({
   host     : 'localhost',
@@ -17,6 +18,10 @@ feed.since         = "now";
 feed.filter        = "_view";
 feed.view          = 'chats/by_time';
 feed.include_docs  = true;
+
+// Google Cloud Messaging opzetten
+var GCMSender = new gcm.Sender('AIzaSyBYlL5hyNUA1rtwZwT30ZKb9zMXswA_AQk');
+
 
 // Algemene lijst met alle open connecties
 var openConnections = {};
@@ -144,8 +149,31 @@ var request = function(request) {
           console.log(myName + ': SAYS: ' + data);
 
           chats.insert({ body: message.utf8Data, author: myName, time: (new Date()).getTime(), smallest: Math.min(myName, herName), largest: Math.max(myName, herName) }, function(err, body) {
-            if(err)
+            if(err) {
               console.log(err);
+            }else{
+              // TODO: checken of deze gebruiker niet al online is, dan hoeft er geen notification verstuurd te worden
+
+              var message = new gcm.Message({
+                  collapseKey: 'BabbleChat',
+                  delayWhileIdle: true,
+                  timeToLive: 3,
+                  data: {
+                      type: 'chat',
+                      herId: herName,
+                      herName: 'unknown',
+                      title: 'You\'ve got a message!',
+                      message: 'An unknown person sent you a message.'
+                  }
+              });
+
+              var registrationIds = [];
+              registrationIds.push('APA91bGZK8JRnJ3OZwy4aQnG4Q7BZsKCOEkH0o9wNtPbTH2AmUj__JBStL0kcXRaPDtHPtTAPVE9PYPdjbrGgKr2OI-w-YE9dXIB80H2Ry1KoO9L_8kqCNx39d6BFhAmv7EzM026NMk98a9KUp5Y_FhbchfBz1ov7g');
+
+              GCMSender.send(message, registrationIds, 4, function (err, result) {
+                if(err) console.log(err);
+              });
+            }
           });
         }
       }

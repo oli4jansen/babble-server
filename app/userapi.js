@@ -494,13 +494,16 @@ var createLink = function(req, res){
 };
 
 var pushNotification = function(req, res) {
+  var sender = new gcm.Sender('AIzaSyBYlL5hyNUA1rtwZwT30ZKb9zMXswA_AQk');
+
+
   // create a message with default values
   var message = new gcm.Message();
 
   // or with object values
   var message = new gcm.Message({
       collapseKey: 'demo',
-      delayWhileIdle: false,
+      delayWhileIdle: true,
       timeToLive: 3,
       data: {
           key1: 'Hallo persoon 1',
@@ -508,42 +511,56 @@ var pushNotification = function(req, res) {
       }
   });
 
-  var sender = new gcm.Sender('AIzaSyBYlL5hyNUA1rtwZwT30ZKb9zMXswA_AQk');
   var registrationIds = [];
 
-  // OPTIONAL
-  // add new key-value in data object
-/*  message.addDataWithKeyValue('key1','message1');
-  message.addDataWithKeyValue('key2','message2');
+  registrationIds.push('APA91bGZK8JRnJ3OZwy4aQnG4Q7BZsKCOEkH0o9wNtPbTH2AmUj__JBStL0kcXRaPDtHPtTAPVE9PYPdjbrGgKr2OI-w-YE9dXIB80H2Ry1KoO9L_8kqCNx39d6BFhAmv7EzM026NMk98a9KUp5Y_FhbchfBz1ov7g'); 
 
-  // or add a data object
-  message.addDataWithObject({
-      key1: 'message1',
-      key2: 'message2'
-  });
-
-  // or with backwards compability of previous versions
-  message.addData('key1','message1');
-  message.addData('key2','message2');
-
-  message.collapseKey = 'demo';
-  message.delayWhileIdle = true;
-  message.timeToLive = 3;
-  message.dryRun = true;
-  // END OPTIONAL*/
-
-  // At least one required
-//  registrationIds.push('regId1');
-  registrationIds.push('regId2'); 
-
-  /**
-   * Params: message-literal, registrationIds-array, No. of retries, callback-function
-   **/
   sender.send(message, registrationIds, 4, function (err, result) {
       res.send(result);
   });
 };
 
+// Gebruiker's regid list updaten
+// POST: {accessToken, regIdList}
+var regid = function(req, res){
+  res.setHeader('Content-Type', 'application/json');
+
+  console.log('API request > User API > regid list update');
+
+  if(req.body.accessToken !== undefined && req.body.regIdList !== undefined) {
+    var regIdList = JSON.parse(req.body.regIdList);
+    if(regIdList instanceof Array) {
+      // Access token die we ontvangen hebben van client instellen
+      FB.setAccessToken(req.body.accessToken);
+
+      // Een facebook graph api request maken
+      FB.api('/me', { fields: ['id'] }, function(FBres){
+        if(!FBres || FBres.error || FBres.id !== req.param("userId")) {
+          console.log(!FBres ? 'error occurred' : FBres.error);
+          res.send({status: 500});
+          return;
+        }
+
+        // De nieuwe foto lijst in de database pushen
+        connection.query('UPDATE users SET GCMRegIDList = ? WHERE id = ?', [req.body.regIdList, FBres.id],
+        function(err, rows, fields) {
+          if (err){
+            console.log('MySQL error: '+err);
+            // Faal, gooi error
+            res.send({status: '500'});
+          }else{
+            // Gelukt, stuur 200
+            res.send({status: '200'});
+          }
+        });
+      });
+    }else{
+      res.send({status: '500'});
+    }
+  }else{
+    res.send({status: '500'});
+  }
+};
 
 exports.authenticate      = authenticate;
 exports.check             = check;
@@ -555,5 +572,6 @@ exports.updatePictureList = updatePictureList;
 exports.deleteAccount     = deleteAccount;
 exports.uploadPicture     = uploadPicture;
 exports.createLink        = createLink;
+exports.regid             = regid;
 
 exports.pushNotification  = pushNotification;
