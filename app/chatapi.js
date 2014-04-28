@@ -34,7 +34,7 @@ var request = function(request) {
   var connection = request.accept(null, request.origin);
 
   // Shit die ingesteld moet worden voordat gechat kan worden
-  var myId      = false;
+  var myID      = false;
   var myName    = false;
   var herID     = false;
   var herName   = false;
