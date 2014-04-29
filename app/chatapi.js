@@ -237,9 +237,8 @@ feed.on('change', function(change) {
             type: 'chat',
             herId: change.doc.author,
             herName: change.doc.authorName,
-            herName: 'unknown',
             title: change.doc.authorName+' says:',
-            message: change.doc.body.substring(0, 50);
+            message: change.doc.body.substring(0, 50)
           }
         });
 
