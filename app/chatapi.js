@@ -171,6 +171,7 @@ var request = function(request) {
           chats.insert({
             body: message.utf8Data,
             author: myID,
+            authorName: myName,
             time: (new Date()).getTime(),
             smallest: Math.min(myID, herID),
             largest: Math.max(myID, herID)
@@ -215,7 +216,7 @@ feed.on('change', function(change) {
     console.log('Smallest: '+change.doc.smallest);
     console.log('Largest: '+change.doc.largest);
 
-    if(change.doc.smallest === change.doc.author) {
+    if(change.doc.smallest == change.doc.author) {
       var IDToSendNotification = change.doc.largest;
       console.log('Send notification to '+IDToSendNotification+' (largest)');
     }else if(change.doc.largest === change.doc.author){
@@ -235,9 +236,10 @@ feed.on('change', function(change) {
           data: {
             type: 'chat',
             herId: change.doc.author,
+            herName: change.doc.authorName,
             herName: 'unknown',
-            title: change.doc.author+' send you a message.',
-            message: 'That\'s right.'
+            title: change.doc.authorName+' says:',
+            message: change.doc.body.substring(0, 50);
           }
         });
 
