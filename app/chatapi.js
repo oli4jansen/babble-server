@@ -150,18 +150,12 @@ var request = function(request) {
         }else{
           // Slechts 1 bericht bevestigd
           if(data.gotMessage.author === herID) {
-            console.log('BEVESTIGD: door '+myID);
+            console.log('Gelezen door '+myID);
 
             chats.destroy(data.gotMessage.id, data.gotMessage.rev, function(err, body) {
-              if(!err) {
-                console.log('DATABASE: bericht verwijderd');
-              }else{
-                console.log(err);
-              }
+              if(err) console.log(err);
             });
 
-          }else{
-            console.log('BEVESTIGD: door '+myID+' (auteur)');
           }
         }
       } else {
@@ -192,7 +186,6 @@ var request = function(request) {
 
     // Als er aan het begin van de connectie minder dan 26 berichten verstuurd waren, dan moeten we de database even updaten zodat de counter de volgende keer up-to-date is
     if(messageCounterInit < 27) {
-//      console.log('MessageCounterInit < 27');
       // update query
       mysqlConnection.query('UPDATE userLinksFinished SET action = ? WHERE (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [openConnections[myID].messageCounter, myID, herID, herID, myID], function(err, rows, fields) {
         if (err) {
@@ -212,22 +205,19 @@ feed.on('change', function(change) {
   // We zijn niet geinteresseerd in delete-changes
   if(change.deleted === undefined) {
 
-    console.log('Auteur: '+change.doc.author);
-    console.log('Smallest: '+change.doc.smallest);
-    console.log('Largest: '+change.doc.largest);
-
+    // Kijken wie de auteur is/wie niet de auteur is
     if(change.doc.smallest == change.doc.author) {
       var IDToSendNotification = change.doc.largest;
-      console.log('Send notification to '+IDToSendNotification+' (largest)');
     }else{
       var IDToSendNotification = change.doc.smallest;
-      console.log('Send notification to '+IDToSendNotification+' (smallest)');
     }
 
+    // Van de niet-auteur halen we de lijst met RegIDs op
     mysqlConnection.query('SELECT GCMRegIDList FROM users WHERE id = ?', [IDToSendNotification], function(err, rows, fields) {
       if (err) {
         console.log(err);
       }else{
+        // Bericht opstellen met alle nodige informatie
         var message = new gcm.Message({
           collapseKey: 'BabbleChat',
           delayWhileIdle: true,
@@ -241,14 +231,16 @@ feed.on('change', function(change) {
         });
 
         var registrationIds = [];
+
+        // Verkregen lijst filteren op lege entries
         var GCMRegIDList = JSON.parse(rows[0].GCMRegIDList);
         for(var i=0;i<GCMRegIDList.length;i++) {
           if(GCMRegIDList[i] !== null) registrationIds.push(GCMRegIDList[i]);
         }
 
+        // Bericht versturen
         GCMSender.send(message, registrationIds, 4, function (err, result) {
           if(err) console.log(err);
-          console.log(result);
         });
       }
     });
