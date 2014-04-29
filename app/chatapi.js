@@ -219,11 +219,9 @@ feed.on('change', function(change) {
     if(change.doc.smallest == change.doc.author) {
       var IDToSendNotification = change.doc.largest;
       console.log('Send notification to '+IDToSendNotification+' (largest)');
-    }else if(change.doc.largest === change.doc.author){
+    }else{
       var IDToSendNotification = change.doc.smallest;
       console.log('Send notification to '+IDToSendNotification+' (smallest)');
-    }else{
-      console.log('Geen van beiden is de auteur...');
     }
 
     mysqlConnection.query('SELECT GCMRegIDList FROM users WHERE id = ?', [IDToSendNotification], function(err, rows, fields) {
