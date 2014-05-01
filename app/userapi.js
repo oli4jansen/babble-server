@@ -453,9 +453,9 @@ var createLink = function(req, res){
                       delayWhileIdle: true,
                       data: {
                         type: 'match',
-                        title: req.body.herName+' and you matched!',
+                        title: req.body.myName+' and you matched!',
                         message: 'Click here to start chatting.',
-                        herName: req.body.herName,
+                        herName: req.body.myName,
                         herId: req.body.userIdHer
                       }
                     });
