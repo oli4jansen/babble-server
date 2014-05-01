@@ -69,9 +69,6 @@ app.post('/user/:action', userAPI.createLink);
 // Feed API request
 app.post('/feed/:userId/:offset/:gender/:likeMen/:likeWomen/:latCoord/:longCoord/:searchRadius', feedAPI.feed);
 
-
-app.get('/pushNotification', userAPI.pushNotification);
-
 // Express aan port 80 koppelen
 server.listen('80', function() {
   console.log((new Date()) + "API and Websocket server staat aan yeah.");

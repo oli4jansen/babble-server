@@ -566,5 +566,3 @@ exports.deleteAccount     = deleteAccount;
 exports.uploadPicture     = uploadPicture;
 exports.createLink        = createLink;
 exports.regid             = regid;
-
-exports.pushNotification  = pushNotification;
