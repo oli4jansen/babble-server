@@ -229,8 +229,10 @@ feed.on('change', function(change) {
           }
         });
 
+        var regID = [rows[0].GCMRegID];
+
         // Bericht versturen
-        GCMSender.send(message, rows[0].GCMRegID, 4, function (err, result) {
+        GCMSender.send(message, regID, 4, function (err, result) {
           if(err) console.log(err);
         });
       }
