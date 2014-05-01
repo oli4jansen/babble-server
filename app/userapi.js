@@ -461,16 +461,18 @@ var createLink = function(req, res){
                     });
 
                     // Reg ID ophalen
-                    var sql = 'SELECT regId FROM users WHERE id = ?';
+                    var sql = 'SELECT GCMRegId FROM users WHERE id = ?';
                     connection.query(
                       sql,
                       [req.body.userIdHer],
                       function(err, rows, fields) {
                         if(!err) {
                           // Versturen die handel
-                          GCMSender.send(message, rows[0].regId, 4, function (err, result) {
+                          GCMSender.send(message, rows[0].GCMRegId, 4, function (err, result) {
                             if(err) console.log(err);
                           });
+                        }else{
+                          console.log(err);
                         }
                       });
                   });
