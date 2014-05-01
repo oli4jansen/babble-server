@@ -453,8 +453,10 @@ var createLink = function(req, res){
                       delayWhileIdle: true,
                       data: {
                         type: 'match',
-                        title: 'You have a new Babble match!',
-                        message: 'Click here to see your match'
+                        title: req.body.herName+' and you matched!',
+                        message: 'Click here to start chatting.',
+                        herName: req.body.herName,
+                        herId: req.body.userIdHer
                       }
                     });
 
