@@ -22,7 +22,6 @@ feed.include_docs  = true;
 // Google Cloud Messaging opzetten
 var GCMSender = new gcm.Sender('AIzaSyBYlL5hyNUA1rtwZwT30ZKb9zMXswA_AQk');
 
-
 // Algemene lijst met alle open connecties
 var openConnections = {};
 
@@ -59,7 +58,7 @@ var request = function(request) {
         myID = data.myName; // naam van degene die verbinding maakt
         herID = data.herName; // naam van de chatpartner
 
-        mysqlConnection.query('SELECT l.action AS action, u1.name AS u1Name, u1.GCMRegIDList AS u1GCMRegIDList, u1.id AS u1Id, u2.name AS u2Name, u2.GCMRegIDList AS u2GCMRegIDList FROM userLinksFinished AS l INNER JOIN users AS u1 ON u1.id = l.userId1 INNER JOIN users AS u2 ON u2.id = l.userId2 WHERE  (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [myID, herID, herID, myID], function(err, rows, fields) {
+        mysqlConnection.query('SELECT l.action AS action, u1.name AS u1Name, u1.GCMRegID AS u1GCMRegID, u1.id AS u1Id, u2.name AS u2Name, u2.GCMRegID AS u2GCMRegID FROM userLinksFinished AS l INNER JOIN users AS u1 ON u1.id = l.userId1 INNER JOIN users AS u2 ON u2.id = l.userId2 WHERE  (userId1 = ? AND userId2 = ?) OR (userId1 = ? AND userId2 = ?)', [myID, herID, herID, myID], function(err, rows, fields) {
           if (err) {
             console.log(err);
           }else{
@@ -81,11 +80,11 @@ var request = function(request) {
               if(rows[0].u1Id === myID) {
                 myName  = rows[0].u1Name;
                 herName = rows[0].u2Name;
-                var herRegIDList = rows[0].u2GCMRegIDList;
+                var herRegID = rows[0].u2GCMRegID;
               }else{
                 myName  = rows[0].u2Name;
                 herName = rows[0].u1Name;
-                var herRegIDList = rows[0].u1GCMRegIDList;
+                var herRegID = rows[0].u1GCMRegID;
               }
 
               openConnections[ myID ] = {
@@ -93,7 +92,7 @@ var request = function(request) {
                 smallest: Math.min(myID, herID),
                 largest: Math.max(myID, herID),
                 herName: herName,
-                herRegIDList: herRegIDList,
+                herRegID: herRegID,
                 messageCounter: rows[0].action, status: status
               };
 
@@ -213,7 +212,7 @@ feed.on('change', function(change) {
     }
 
     // Van de niet-auteur halen we de lijst met RegIDs op
-    mysqlConnection.query('SELECT GCMRegIDList FROM users WHERE id = ?', [IDToSendNotification], function(err, rows, fields) {
+    mysqlConnection.query('SELECT GCMRegID FROM users WHERE id = ?', [IDToSendNotification], function(err, rows, fields) {
       if (err) {
         console.log(err);
       }else{
@@ -230,16 +229,8 @@ feed.on('change', function(change) {
           }
         });
 
-        var registrationIds = [];
-
-        // Verkregen lijst filteren op lege entries
-        var GCMRegIDList = JSON.parse(rows[0].GCMRegIDList);
-        for(var i=0;i<GCMRegIDList.length;i++) {
-          if(GCMRegIDList[i] !== null) registrationIds.push(GCMRegIDList[i]);
-        }
-
         // Bericht versturen
-        GCMSender.send(message, registrationIds, 4, function (err, result) {
+        GCMSender.send(message, rows[0].GCMRegID, 4, function (err, result) {
           if(err) console.log(err);
         });
       }

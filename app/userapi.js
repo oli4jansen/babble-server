@@ -16,6 +16,9 @@ connection.query('USE babble');
 // Dit zou ook naar een config file moeten
 var bingMapsKey = 'AsrEVvWtouDR82GoF9DjxzJuzBu9qOyytqtiApge__EnBY6YYZ22WuPvpgUPep56';
 
+// Google Cloud Messaging opzetten
+var GCMSender = new gcm.Sender('AIzaSyBYlL5hyNUA1rtwZwT30ZKb9zMXswA_AQk');
+
 var authenticate = function(req, res) {
   console.log('API request > User API > authenticate');
 
@@ -444,12 +447,30 @@ var createLink = function(req, res){
                     // Die shit is gelukt yeah
                     res.send({status: '200', data: 'match'});
 
+                    // Ook nog even een push notification sturen naar 'her'
+                    var message = new gcm.Message({
+                      collapseKey: 'BabbleMatch',
+                      delayWhileIdle: true,
+                      data: {
+                        type: 'match',
+                        title: 'You have a new Babble match!',
+                        message: 'Click here to see your match'
+                      }
+                    });
 
-
-                    // Hier: push notifications versturen naar 'her'
-
-
-
+                    // Reg ID ophalen
+                    var sql = 'SELECT regId FROM users WHERE id = ?';
+                    connection.query(
+                      sql,
+                      [req.body.userIdHer],
+                      function(err, rows, fields) {
+                        if(!err) {
+                          // Versturen die handel
+                          GCMSender.send(message, rows[0].regId, 4, function (err, result) {
+                            if(err) console.log(err);
+                          });
+                        }
+                      });
                   });
                 });
               });
@@ -493,43 +514,16 @@ var createLink = function(req, res){
   }
 };
 
-var pushNotification = function(req, res) {
-  var sender = new gcm.Sender('AIzaSyBYlL5hyNUA1rtwZwT30ZKb9zMXswA_AQk');
-
-
-  // create a message with default values
-  var message = new gcm.Message();
-
-  // or with object values
-  var message = new gcm.Message({
-      collapseKey: 'demo',
-      delayWhileIdle: true,
-      timeToLive: 3,
-      data: {
-          key1: 'Hallo persoon 1',
-          key2: 'Hallo persoon 2'
-      }
-  });
-
-  var registrationIds = [];
-
-  registrationIds.push('APA91bGZK8JRnJ3OZwy4aQnG4Q7BZsKCOEkH0o9wNtPbTH2AmUj__JBStL0kcXRaPDtHPtTAPVE9PYPdjbrGgKr2OI-w-YE9dXIB80H2Ry1KoO9L_8kqCNx39d6BFhAmv7EzM026NMk98a9KUp5Y_FhbchfBz1ov7g'); 
-
-  sender.send(message, registrationIds, 4, function (err, result) {
-      res.send(result);
-  });
-};
-
 // Gebruiker's regid list updaten
-// POST: {accessToken, regIdList}
+// POST: {accessToken, regId}
 var regid = function(req, res){
   res.setHeader('Content-Type', 'application/json');
 
-  console.log('API request > User API > regid list update');
+  console.log('API request > User API > regid update');
 
-  if(req.body.accessToken !== undefined && req.body.regIdList !== undefined) {
-    var regIdList = JSON.parse(req.body.regIdList);
-    if(regIdList instanceof Array) {
+  if(req.body.accessToken !== undefined && req.body.regId !== undefined) {
+    var regId = JSON.parse(req.body.regId);
+    if(regId instanceof Array) {
       // Access token die we ontvangen hebben van client instellen
       FB.setAccessToken(req.body.accessToken);
 
@@ -540,7 +534,7 @@ var regid = function(req, res){
           res.send({status: 500});
         }else{
           // De nieuwe foto lijst in de database pushen
-          connection.query('UPDATE users SET GCMRegIDList = ? WHERE id = ?', [req.body.regIdList, FBres.id],
+          connection.query('UPDATE users SET GCMRegID = ? WHERE id = ?', [req.body.regId, FBres.id],
           function(err, rows, fields) {
             if (err){
               console.log('MySQL error: '+err);
