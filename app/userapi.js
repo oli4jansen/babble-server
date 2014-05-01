@@ -522,34 +522,29 @@ var regid = function(req, res){
   console.log('API request > User API > regid update');
 
   if(req.body.accessToken !== undefined && req.body.regId !== undefined) {
-    var regId = JSON.parse(req.body.regId);
-    if(regId instanceof Array) {
-      // Access token die we ontvangen hebben van client instellen
-      FB.setAccessToken(req.body.accessToken);
+    // Access token die we ontvangen hebben van client instellen
+    FB.setAccessToken(req.body.accessToken);
 
-      // Een facebook graph api request maken
-      FB.api('/me', { fields: ['id'] }, function(FBres){
-        if(!FBres || FBres.error || FBres.id !== req.param("userId")) {
-          console.log(!FBres ? 'error occurred' : FBres);
-          res.send({status: 500});
-        }else{
-          // De nieuwe foto lijst in de database pushen
-          connection.query('UPDATE users SET GCMRegID = ? WHERE id = ?', [req.body.regId, FBres.id],
-          function(err, rows, fields) {
-            if (err){
-              console.log('MySQL error: '+err);
-              // Faal, gooi error
-              res.send({status: '500'});
-            }else{
-              // Gelukt, stuur 200
-              res.send({status: '200'});
-            }
-          });
-        }
-      });
-    }else{
-      res.send({status: '500'});
-    }
+    // Een facebook graph api request maken
+    FB.api('/me', { fields: ['id'] }, function(FBres){
+      if(!FBres || FBres.error || FBres.id !== req.param("userId")) {
+        console.log(!FBres ? 'error occurred' : FBres);
+        res.send({status: 500});
+      }else{
+        // De nieuwe foto lijst in de database pushen
+        connection.query('UPDATE users SET GCMRegID = ? WHERE id = ?', [req.body.regId, FBres.id],
+        function(err, rows, fields) {
+          if (err){
+            console.log('MySQL error: '+err);
+            // Faal, gooi error
+            res.send({status: '500'});
+          }else{
+            // Gelukt, stuur 200
+            res.send({status: '200'});
+          }
+        });
+      }
+    });
   }else{
     res.send({status: '500'});
   }
