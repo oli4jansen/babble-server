@@ -468,7 +468,7 @@ var createLink = function(req, res){
                       function(err, rows, fields) {
                         if(!err) {
                           // Versturen die handel
-                          GCMSender.send(message, rows[0].GCMRegId, 4, function (err, result) {
+                          GCMSender.send(message, [ rows[0].GCMRegId ], 4, function (err, result) {
                             if(err) console.log(err);
                           });
                         }else{
