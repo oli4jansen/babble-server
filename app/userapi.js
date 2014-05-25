@@ -86,11 +86,11 @@ var authenticate = function(req, res) {
             throw 'Please provide us with a valid location. We can\'t find people near you if we don\'t know where you are.';
           }
         }
-      } catch(err) {
-        if(request!== undefined) request.end();
-        res.send({ status: 500, data: err });
       }
-    });
+    } catch(err) {
+      if(request!== undefined) request.end();
+      res.send({ status: 500, data: err });
+    }
   });
 };
 
