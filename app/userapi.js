@@ -24,99 +24,71 @@ var authenticate = function(req, res) {
 
   res.setHeader('Content-Type', 'application/json');
 
-  // Access token die we ontvangen hebben van client instellen
-  FB.setAccessToken(req.body.accessToken);
+  // Checken of een gebruiker met dit ID al bestaat, zo ja, haal access token op
+  connection.query('SELECT COUNT(id) FROM users WHERE id = ? AND signeduptimestamp = ?', [req.body.id, req.body.signeduptimestamp], function(err, rows, fields) {
+    try {
+      if (err) {
+        throw err;
+      }else{
+        if(rows.length > 0) {
 
-  // Een facebook graph api request maken
-  FB.api('/me', { fields: ['id', 'first_name', 'location', 'gender', 'picture.type(large)'] }, function(FBres){
-    if(!FBres || FBres.error) {
-      console.log(!FBres ? 'error occurred' : FBres.error);
-      res.send({status: 500});
-      return;
-    }
+          res.send({status:200, data: {} });
+          console.log('Ingelogd als '+FBres.id);
 
-    // Checken of een gebruiker met dit ID al bestaat, zo ja, haal access token op
-    connection.query('SELECT accessToken FROM users WHERE id = ?', [FBres.id], function(err, rows, fields) {
-      try {
-        if (err) {
-          throw err;
         }else{
-          if(rows.length > 0) {
-            // Alvast status 200 terugkeren zodat de client verder kan
-            res.send({status:200, data: {id:FBres.id}});
-            console.log('Ingelogd als '+FBres.id);
+          if(req.body.id !== undefined && req.body.name !== undefined && req.body.pictureList !== undefined && req.body.location !== undefined && req.body.gender !== undefined && req.body.birthdate !== undefined && req.body.description !== undefined && req.body.location !== undefined && req.body.location !== '') {
 
-            // Als de access token uit de DB niet gelijk is aan de opgegeven access token:
-            if(rows[0].accessToken !== req.body.accessToken) {
-              // Access token updaten
-              connection.query('UPDATE users SET accessToken = ? WHERE id = ?', [req.body.accessToken, FBres.id], function(err, rows, fields) {
-                // Faal, gooi error
-                if (err) throw err;
+            // Coordinaten zijn nu nog leeg
+            var latitude = '';
+            var longitude = '';
+
+            // Request maken naar VirtualEarth > locatie opgeven
+            var request = http.request('http://dev.virtualearth.net/REST/v1/Locations?q='+ encodeURIComponent(req.body.location) + '&o=json&key='+bingMapsKey, function(response){
+              var body = ""
+              response.on('data', function(data) {
+                body += data;
               });
-            }
+              response.on('end', function() {
+                // Zodra we reactie hebben > result parsen
+                var result = JSON.parse(body);
 
-          }else{
-            if(FBres.id !== undefined && FBres.first_name !== undefined && req.body.pictureList !== undefined && req.body.location !== undefined && FBres.gender !== undefined && req.body.birthday !== undefined && req.body.description !== undefined) {
-              if(req.body.location !== '') {
-                // Coordinaten ophalen op basis van locatie
-                var latitude = '';
-                var longitude = '';
+                if(result.resourceSets[0].resources !== undefined && result.resourceSets[0].resources.length > 0) {
+                  // Coordinaten eruit halen, als die gegeven zijn
+                  latitude  = result.resourceSets[0].resources[0].point.coordinates[0];
+                  longitude = result.resourceSets[0].resources[0].point.coordinates[1];
 
-                var request = http.request('http://dev.virtualearth.net/REST/v1/Locations?q='+ encodeURIComponent(req.body.location) + '&o=json&key='+bingMapsKey, function(response){
-                  var body = ""
-                  response.on('data', function(data) {
-                    body += data;
-                  });
-                  response.on('end', function() {
-                    var result = JSON.parse(body);
-                    if(result.resourceSets[0].resources !== undefined && result.resourceSets[0].resources.length > 0) {
-                      latitude  = result.resourceSets[0].resources[0].point.coordinates[0];
-                      longitude = result.resourceSets[0].resources[0].point.coordinates[1];
+                  // Gegeven in users table invoeren
+                  connection.query(
+                  'INSERT INTO users (id, signeduptimestamp, name, birthdate, location, gender, pictureList, description, likeMen, likeWomen, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                  [req.body.id, req.body.accessToken, req.body.name, req.body.birthdate, req.body.location, req.body.gender, req.body.pictureList, req.body.description, req.body.likeMen, req.body.likeWomen, latitude, longitude],
+                  function(err, rows, fields) {
+                    // Faal, stuur 500
+                    if (err) {
+                      console.log(err);
+                      throw 'We\'re sorry but an error occurred on our server.';
+                    }else{
+                      console.log('Gebruiker '+req.body.id+' aangemaakt.');
 
-                      // Gegeven in users table invoeren
-                      connection.query(
-                      'INSERT INTO users (id, accessToken, name, birthday, location, gender, pictureList, description, likeMen, likeWomen, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                      [FBres.id, req.body.accessToken, FBres.first_name, req.body.birthday, req.body.location, FBres.gender, req.body.pictureList, req.body.description, req.body.likeMen, req.body.likeWomen, latitude, longitude],
-                      function(err, rows, fields) {
-                        // Faal, stuur 500
-                        if (err) {
-                          console.log(err);
-                          throw 'We\'re sorry but an error occurred on our server.';
-                        }else{
-                          console.log('Gebruiker '+FBres.id+' aangemaakt.');
-
-                          // Gelukt, stuur 200
-                          res.send({status: 200, data: {id:FBres.id}});
-                        }
-                      });
-                    } else {
-                      throw 'The location you provided wasn\'t an valid one.';
+                      // Gelukt, stuur 200
+                      res.send({status: 200, data: {} });
                     }
                   });
-                });
-                request.on('error', function(e) {
-                  throw e.message;
-                });
-                request.end();
-              } else {
-                throw 'Please provide us with a valid location. We can\'t find people near you if we don\'t know where you are.';
-              }
-            } else {
-              var location = '';
-              if(FBres.location !== undefined && FBres.location.name !== undefined) location = FBres.location.name;
-
-              res.send({
-                status: 206,
-                data: {
-                  id: FBres.id,
-                  name: FBres.first_name,
-                  pictureList: JSON.stringify([ { url: 'http://graph.facebook.com/'+FBres.id+'/picture?width=600&height=600' } ]),
-                  accessToken: req.body.accessToken,
-                  location: location
+                } else {
+                  throw 'The location you provided wasn\'t an valid one.';
                 }
               });
-
-            }
+            });
+            request.on('error', function(e) {
+              throw e.message;
+            });
+            request.end();
+          } else {
+            throw 'Please provide us with a valid location. We can\'t find people near you if we don\'t know where you are.';
+          }
+        } else {
+          res.send({
+            status: 206,
+            data: {}
           }
         }
       } catch(err) {
