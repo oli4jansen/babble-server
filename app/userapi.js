@@ -25,7 +25,7 @@ var authenticate = function(req, res) {
   res.setHeader('Content-Type', 'application/json');
 
   // Checken of een gebruiker met dit ID al bestaat, zo ja, haal access token op
-  connection.query('SELECT COUNT(id) FROM users WHERE id = ? AND signeduptimestamp = ?', [req.body.id, req.body.signeduptimestamp], function(err, rows, fields) {
+  connection.query('SELECT id FROM users WHERE id = ? AND signeduptimestamp = ?', [req.body.id, req.body.signeduptimestamp], function(err, rows, fields) {
     try {
       if (err) {
         throw err;
