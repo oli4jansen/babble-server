@@ -60,7 +60,7 @@ var authenticate = function(req, res) {
                   // Gegeven in users table invoeren
                   connection.query(
                   'INSERT INTO users (id, signeduptimestamp, name, birthdate, location, gender, pictureList, description, likeMen, likeWomen, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                  [req.body.id, req.body.accessToken, req.body.name, req.body.birthdate, req.body.location, req.body.gender, req.body.pictureList, req.body.description, req.body.likeMen, req.body.likeWomen, latitude, longitude],
+                  [req.body.id, req.body.signeduptimestamp, req.body.name, req.body.birthdate, req.body.location, req.body.gender, req.body.pictureList, req.body.description, req.body.likeMen, req.body.likeWomen, latitude, longitude],
                   function(err, rows, fields) {
                     // Faal, stuur 500
                     if (err) {
