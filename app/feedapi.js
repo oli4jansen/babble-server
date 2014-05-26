@@ -93,7 +93,8 @@ var feed = function(req, res){
               }
             });
         }else{
-          throw 'User credentials not valid.';
+          // Unauthorized
+          res.send({status: '401', data: []});
         }
       }
     });
