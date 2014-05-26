@@ -25,15 +25,14 @@ var authenticate = function(req, res) {
   res.setHeader('Content-Type', 'application/json');
 
   // Checken of een gebruiker met dit ID al bestaat, zo ja, haal access token op
-  connection.query('SELECT id FROM users WHERE id = ? AND signeduptimestamp = ?', [req.body.id, req.body.signeduptimestamp], function(err, rows, fields) {
+  connection.query('SELECT * FROM users WHERE id = ? AND signeduptimestamp = ?', [req.body.id, req.body.signeduptimestamp], function(err, rows, fields) {
     try {
       if (err) {
         throw err;
       }else{
         if(rows.length > 0) {
 
-          res.send({status:200, data: {} });
-          console.log('Ingelogd als '+FBres.id);
+          res.send({status:200, data: rows[0] });
 
         }else{
           if(req.body.id !== undefined && req.body.name !== undefined && req.body.pictureList !== undefined && req.body.location !== undefined && req.body.gender !== undefined && req.body.birthdate !== undefined && req.body.description !== undefined && req.body.location !== undefined && req.body.location !== '') {
@@ -70,7 +69,18 @@ var authenticate = function(req, res) {
                       console.log('Gebruiker '+req.body.id+' aangemaakt.');
 
                       // Gelukt, stuur 200
-                      res.send({status: 200, data: {} });
+                      res.send({status: 200, data: {
+                        id: req.body.id,
+                        signeduptimestamp: req.body.signeduptimestamp,
+                        name: req.body.name,
+                        pictureList: req.body.pictureList,
+                        location: req.body.location,
+                        birthdate: req.body.birthdate,
+                        gender: req.body.gender,
+                        likeMen: req.body.likeMen,
+                        likeWomen: req.body.likeWomen,
+                        description: req.body.description
+                      } });
                     }
                   });
                 } else {
